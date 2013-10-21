@@ -11,7 +11,6 @@ import java.io.UnsupportedEncodingException;
 public class CreateInputPairs {
   
   public static void main(String [] args) {
-    // I want to have the ASCII representation of a string.
     String text = "Hello World!";
     byte[] utf8 = new byte[]{};
     try {
@@ -20,7 +19,8 @@ public class CreateInputPairs {
       e.printStackTrace();
     }
     for( byte i : utf8 ) {
-      System.out.print(i);
+      String s = String.format("%8s", Integer.toBinaryString(i & 0xFF)).replace(' ', '0');
+      System.out.println(s);
     }
   }
 }
