@@ -18,9 +18,16 @@ public class CreateInputPairs {
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
     }
-    for( byte i : utf8 ) {
-      String s = String.format("%8s", Integer.toBinaryString(i & 0xFF)).replace(' ', '0');
-      System.out.println(s);
-    }
+//    for( byte i : utf8 ) {
+//      String s = String.format("%8s", Integer.toBinaryString(i & 0xFF)).replace(' ', '0');
+//      System.out.println(s);
+//    }
+    String s = String.format("%8s", Integer.toBinaryString(utf8[11] & 0xFF)).replace(' ', '0');
+    System.out.println(s);
+    for( int i = 0; i < 8; i++ ) {
+      byte b = (byte) (utf8[11] ^ (1 << i));
+      s = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
+      System.out.println(b);
+    }    
   }
 }
