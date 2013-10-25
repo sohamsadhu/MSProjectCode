@@ -1,3 +1,7 @@
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -22,12 +26,40 @@ public class CreateInputPairs {
 //      String s = String.format("%8s", Integer.toBinaryString(i & 0xFF)).replace(' ', '0');
 //      System.out.println(s);
 //    }
+    byte [] temp = utf8;
+    try {
+      File file = new File("input.txt");
+      if (!file.exists()) {
+        file.createNewFile();
+      }        
+      FileWriter fw = new FileWriter(file.getAbsoluteFile());
+      BufferedWriter bw = new BufferedWriter(fw);
+      String something;
+      byte some = temp[11];
+      for( int i = 0; i < 8; i++ ) {
+        byte b = (byte) (some ^ (1 << i));
+        temp[11] = b;
+        //s = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
+        something = new String(utf8);
+        bw.write(something + "\n");
+      }
+      bw.close();
+    } catch (IOException e) {
+      System.out.println("The input file could not be created.");
+      e.printStackTrace();
+    }    
+//    for( byte i : utf8 ) {
+//      String s = String.format("%8s", Integer.toBinaryString(i & 0xFF)).replace(' ', '0');
+//      System.out.print(s);
+//    }
     String s = String.format("%8s", Integer.toBinaryString(utf8[11] & 0xFF)).replace(' ', '0');
-    System.out.println(s);
+    byte c = utf8[11];
     for( int i = 0; i < 8; i++ ) {
-      byte b = (byte) (utf8[11] ^ (1 << i));
-      s = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
-      System.out.println(b);
+      byte b = (byte) (c ^ (1 << i));
+      utf8[11] = b;
+      //s = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
+      s = new String(utf8);
+      System.out.println(s);
     }    
   }
 }
