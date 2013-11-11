@@ -1,3 +1,4 @@
+package Input;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -19,7 +20,8 @@ public class CreateInputPairsImpl implements CreateInputPairs
       BufferedWriter bw = new BufferedWriter(fw);
       String something;
       byte temp = input[encoded_length - 1];
-      for( int i = 0; i < 8; i++ ) {
+      for( int i = 0; i < 8; i++ ) 
+      {
         byte b = (byte) (temp ^ (1 << i));
         input[encoded_length - 1] = b;
         String s = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
@@ -28,7 +30,9 @@ public class CreateInputPairsImpl implements CreateInputPairs
         bw.write(s); bw.newLine();
       }
       bw.close();
-    } catch (IOException e) {
+    } 
+    catch (IOException e)
+    {
       System.out.println("The input file could not be created.");
       e.printStackTrace();
     }
