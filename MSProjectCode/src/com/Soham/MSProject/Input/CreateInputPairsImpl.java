@@ -1,4 +1,5 @@
-package Input;
+package com.Soham.MSProject.Input;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -6,16 +7,16 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 public class CreateInputPairsImpl implements CreateInputPairs 
-{
-  
-  public void writePairsToFile( byte [] input, int combinations, int encoded_length )
+{  
+  public void writePairsToFile( byte [] input, int combinations, int encoded_length,
+      String output_file)
   {
-    try 
+    try
     {
-      File file = new File("input.txt");
+      File file = new File(output_file + ".txt");
       if (!file.exists()) {
         file.createNewFile();
-      }        
+      }
       FileWriter fw = new FileWriter(file.getAbsoluteFile());
       BufferedWriter bw = new BufferedWriter(fw);
       String something;
@@ -38,7 +39,7 @@ public class CreateInputPairsImpl implements CreateInputPairs
     }
   }
   
-  public void createInputPairsFile(String seed, int combinations) 
+  public void createInputPairsFile(String seed, int combinations, String output_file) 
   {
     byte[] input = new byte[]{};
     try 
@@ -51,15 +52,16 @@ public class CreateInputPairsImpl implements CreateInputPairs
       System.out.println("The given seed could not be encoded. Exiting now.");
       return;
     }
-    writePairsToFile( input, combinations, input.length );
+    writePairsToFile( input, combinations, input.length, output_file );
   }
   
   public static void main(String [] args) 
   {
-    if( args.length < 2 )
+    if( args.length < 3 )
     {
       System.out.println("The number of arguments are incorrect.");
-      System.out.println("Usage: java CreateInputPairsImpl \"seed\" number_of_combinations");
+      System.out.println("Usage: java CreateInputPairsImpl \"seed\" "
+          + "\"number of combinations\" \"output file name\"");
       System.exit(0);
     }
     String seed = args[0];
@@ -71,11 +73,13 @@ public class CreateInputPairsImpl implements CreateInputPairs
     catch( NumberFormatException nex ) 
     {
       System.out.println("The second argument to program should be a function.");
-      System.out.println("Usage: java CreateInputPairsImpl \"seed\" number_of_combinations");
+      System.out.println("Usage: java CreateInputPairsImpl \"seed\" "
+          + "\"number of combinations\" \"output file name\"");
       nex.printStackTrace();
       System.exit(0);
     }
+    String output_file = args[2];
     CreateInputPairs cip = new CreateInputPairsImpl();
-    cip.createInputPairsFile(seed, combinations);
+    cip.createInputPairsFile(seed, combinations, output_file);
   }
 }

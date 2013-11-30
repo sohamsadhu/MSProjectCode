@@ -1,18 +1,19 @@
-package GUI;
+package com.Soham.MSProject.GUI;
 
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import java.awt.BorderLayout;
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+
+import com.Soham.MSProject.Input.CreateInputPairs;
+import com.Soham.MSProject.Input.CreateInputPairsImpl;
+
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import Input.CreateInputPairs;
-import Input.CreateInputPairsImpl;
 
 public class Experiment {
 

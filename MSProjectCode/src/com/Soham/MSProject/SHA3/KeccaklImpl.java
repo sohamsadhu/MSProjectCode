@@ -1,4 +1,4 @@
-package SHA3;
+package com.Soham.MSProject.SHA3;
 
 public class KeccaklImpl implements Keccak 
 {

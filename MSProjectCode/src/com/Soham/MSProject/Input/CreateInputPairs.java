@@ -1,4 +1,4 @@
-package Input;
+package com.Soham.MSProject.Input;
 /**
  * This interface will create the input file containing pairs of text. The seed text will be given to the file.
  * And that will be changed for each one of the bits, step by step. That is bits beginning from 1 to 15
@@ -8,5 +8,5 @@ package Input;
  * 
  */
 public interface CreateInputPairs {
-  void createInputPairsFile(String seed, int combinations);
+  void createInputPairsFile(String seed, int combinations, String output_file);
 }
