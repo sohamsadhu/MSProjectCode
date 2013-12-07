@@ -14,7 +14,8 @@ public class CreateInputPairHelper
    */
   public String[] listFromEmptyString( final int flips )
   {
-    if( flips > 20 || flips < 0 ) {
+    if( flips > 20 || flips < 0 ) 
+    {
       System.err.println("Please request at least 0 or less than 21 flips.");
       return null;
     }
@@ -72,7 +73,7 @@ public class CreateInputPairHelper
    */
   public String[] createListOfFlippedBytes( final String seed, final int flips )
   {    
-    if( seed == null || flips > 20 || flips < 0 ) 
+    if( seed == null || flips > 21 || flips < 0 ) 
     {
       System.err.println("Please correct the input. Seed cannot be null, and number of flips"
           + "is limited at between 1 and 20 included.");
@@ -88,7 +89,7 @@ public class CreateInputPairHelper
     try
     {
       input = seed.getBytes("utf-8");
-      if( flips > (input.length * 8)) {
+      if( flips > (input.length * 8)) { 
         flipBitsFromEnd( input, input.length * 8 );
       } else {
         flipBitsFromEnd( input, flips );
