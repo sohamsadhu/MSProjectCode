@@ -7,6 +7,9 @@ package com.Soham.MSProject.Input;
  * @author ssadhu
  * 
  */
-public interface CreateInputPairs {
-  void createInputPairsFile(String seed, int combinations, String output_file);
+public interface CreateInputPairs 
+{
+  public void createInputPairsFile(String seed, int combinations, String output_file);
+  
+  public void createFile( String seed, String flipend, Integer flips, String file_name );
 }

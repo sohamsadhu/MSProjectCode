@@ -14,6 +14,9 @@ import com.Soham.MSProject.Input.CreateInputPairsImpl;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javax.swing.AbstractAction;
+import java.awt.event.ActionEvent;
+import javax.swing.Action;
 
 public class Experiment {
 
@@ -21,6 +24,24 @@ public class Experiment {
   private JTextField seedipbox;
   private JLabel lblNumberOfPairs;
   private JTextField opfilename;
+  private final Action action = new SwingAction();
+  
+  private enum GroupOfFlippedBits {    
+    Starting( "Starting" ),
+    Middle( "Middle" ),
+    Trailing( "Trailing" );
+    
+    private String bitposition;
+    
+    private GroupOfFlippedBits( String bitpos ) {
+      this.bitposition = bitpos;
+    }
+    
+    @Override
+    public String toString() {
+      return bitposition;
+    }
+  }
 
   /**
    * Launch the application.
@@ -50,7 +71,7 @@ public class Experiment {
    */
   private void initialize() {
     frame = new JFrame();
-    frame.setBounds(100, 100, 990, 536);
+    frame.setBounds(100, 100, 952, 564);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.getContentPane().setLayout(null);
     
@@ -61,40 +82,67 @@ public class Experiment {
     seedipbox = new JTextField();
     seediptxtlbl.setLabelFor(seedipbox);
     seedipbox.setText("Input String");
-    seedipbox.setBounds(121, 0, 599, 22);
+    seedipbox.setBounds(121, 0, 580, 22);
     frame.getContentPane().add(seedipbox);
     seedipbox.setColumns(10);
     
     lblNumberOfPairs = new JLabel("Number of Pairs");
-    lblNumberOfPairs.setBounds(0, 27, 109, 16);
+    lblNumberOfPairs.setBounds(0, 35, 109, 16);
     frame.getContentPane().add(lblNumberOfPairs);
     
-    JComboBox numberofpairs = new JComboBox();
+    final JComboBox<Integer> numberofpairs = new JComboBox<Integer>();
+    numberofpairs.setToolTipText("This selects the number of strings with flips to produce.");
     lblNumberOfPairs.setLabelFor(numberofpairs);
-    numberofpairs.setModel(new DefaultComboBoxModel(new String[] {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"}));
+    numberofpairs.setModel(new DefaultComboBoxModel<Integer>
+      (new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}));
     numberofpairs.setMaximumRowCount(20);
-    numberofpairs.setBounds(121, 24, 56, 22);
+    numberofpairs.setBounds(121, 35, 56, 22);
     frame.getContentPane().add(numberofpairs);
     
     JLabel lblOutputFile = new JLabel("Output File");
-    lblOutputFile.setBounds(212, 27, 79, 16);
+    lblOutputFile.setBounds(211, 35, 79, 16);
     frame.getContentPane().add(lblOutputFile);
     
     opfilename = new JTextField();
     lblOutputFile.setLabelFor(opfilename);
     opfilename.setText("Output File");
-    opfilename.setBounds(288, 24, 421, 22);
+    opfilename.setBounds(279, 35, 421, 22);
     frame.getContentPane().add(opfilename);
     opfilename.setColumns(10);
     
+    JLabel lblFlipBits = new JLabel("Flip bits");
+    lblFlipBits.setBounds(713, 3, 56, 19);
+    frame.getContentPane().add(lblFlipBits);
+    
+    final JComboBox<GroupOfFlippedBits> flipBitValue = new JComboBox<GroupOfFlippedBits>();
+    flipBitValue.setModel(new DefaultComboBoxModel<GroupOfFlippedBits>(GroupOfFlippedBits.values()));
+    flipBitValue.setToolTipText("This will select from which end the flipping to start.");
+    flipBitValue.setBounds(781, 0, 92, 22);
+    frame.getContentPane().add(flipBitValue);
+    
     JButton createipbtn = new JButton("Create input text file.");
+    createipbtn.setAction(action);
     createipbtn.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         CreateInputPairs c = new CreateInputPairsImpl();
+        c.printInput( seedipbox.getText(), flipBitValue.getSelectedItem().toString(),
+            ( Integer )numberofpairs.getSelectedItem(), opfilename.getText() );
       }
     });
-    createipbtn.setBounds(752, 13, 171, 34);
+    createipbtn.setBounds(723, 25, 153, 32);
     frame.getContentPane().add(createipbtn);
+  }
+  
+  private class SwingAction extends AbstractAction {
+    
+    private static final long serialVersionUID = 1L;
+    
+    public SwingAction() {
+      putValue(NAME, "SwingAction");
+      putValue(SHORT_DESCRIPTION, "Some short description");
+    }
+    
+    public void actionPerformed(ActionEvent e) {}
   }
 }

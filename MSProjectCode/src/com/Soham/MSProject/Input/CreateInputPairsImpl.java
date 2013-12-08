@@ -31,6 +31,7 @@ public class CreateInputPairsImpl implements CreateInputPairs
         bw.write(s); bw.newLine();
       }
       bw.close();
+      fw.close();
     } 
     catch (IOException e)
     {
@@ -53,6 +54,12 @@ public class CreateInputPairsImpl implements CreateInputPairs
       return;
     }
     writePairsToFile( input, combinations, input.length, output_file );
+  }
+  
+  public void createFile( String seed, String flipend, Integer flips, String file_name )
+  {
+    System.out.println( "Seed " + seed + " flipend " + flipend + " flips " + flips +
+        "file name " + file_name );
   }
   
   public static void main(String [] args) 
