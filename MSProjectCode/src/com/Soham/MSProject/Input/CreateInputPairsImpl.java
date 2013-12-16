@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 public class CreateInputPairsImpl implements CreateInputPairs 
 {  
@@ -56,10 +57,49 @@ public class CreateInputPairsImpl implements CreateInputPairs
     writePairsToFile( input, combinations, input.length, output_file );
   }
   
-  public void createFile( String seed, String flipend, Integer flips, String file_name )
+  public String[] getFlippedSeeds( final String seed, final String flipend, 
+      final Integer flips )
+  {
+    return ( new String[] { null } );
+  }
+  
+  public void writeToFile( final String seed, final String flipend, 
+      final Integer flips, final File file )
+  {
+    String [] flipped_seeds = getFlippedSeeds( seed, flipend, flips );
+  }
+  
+  public Object[] createFile( final String seed, final String flipend, 
+      final Integer flips, final String file_name )
   {
     System.out.println( "Seed " + seed + " flipend " + flipend + " flips " + flips +
-        "file name " + file_name );
+        " file name " + file_name );
+    if( file_name.equals("") ) {  // Check if the file name has been entered.
+      return (new Object[] {false, "Please enter a file name."});
+    }
+    String filename = "";
+    try 
+    {
+      filename = new String(URLEncoder.encode(file_name, "UTF-8")); // Encode any shit for an inappropriate file name.
+      filename = filename.endsWith(".txt") ? filename : (filename + ".txt"); // Make sure of its' text format.
+      System.out.println("File name is "+ filename);
+      File file = new File( filename );  // Create the file object and the file.
+      if (!file.exists()) {
+        file.createNewFile();
+      }
+      writeToFile( seed, flipend, flips, file );
+    }
+    catch (UnsupportedEncodingException uex) 
+    {
+      uex.printStackTrace();
+      return (new Object[] { false, "Please provide a valid name for input file to be created." });
+    }
+    catch( IOException iex )
+    {
+      iex.printStackTrace();
+      return (new Object[] { false, "Input file creation failed. Could not create or write to the file." });
+    }
+    return (new Object[] {true, "Input file "+ filename +" successfully created."});
   }
   
   public static void main(String [] args) 

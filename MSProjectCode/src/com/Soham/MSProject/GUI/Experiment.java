@@ -4,6 +4,7 @@ import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
@@ -14,9 +15,6 @@ import com.Soham.MSProject.Input.CreateInputPairsImpl;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import javax.swing.AbstractAction;
-import java.awt.event.ActionEvent;
-import javax.swing.Action;
 
 public class Experiment {
 
@@ -24,7 +22,6 @@ public class Experiment {
   private JTextField seedipbox;
   private JLabel lblNumberOfPairs;
   private JTextField opfilename;
-  private final Action action = new SwingAction();
   
   private enum GroupOfFlippedBits {    
     Starting( "Starting" ),
@@ -80,6 +77,7 @@ public class Experiment {
     frame.getContentPane().add(seediptxtlbl);
     
     seedipbox = new JTextField();
+    seedipbox.setToolTipText("Input the seed string that will have bits flipped for experiment.");
     seediptxtlbl.setLabelFor(seedipbox);
     seedipbox.setText("Input String");
     seedipbox.setBounds(121, 0, 580, 22);
@@ -104,6 +102,7 @@ public class Experiment {
     frame.getContentPane().add(lblOutputFile);
     
     opfilename = new JTextField();
+    opfilename.setToolTipText("You can enter the file directory to better organize the results.");
     lblOutputFile.setLabelFor(opfilename);
     opfilename.setText("Output File");
     opfilename.setBounds(279, 35, 421, 22);
@@ -121,28 +120,22 @@ public class Experiment {
     frame.getContentPane().add(flipBitValue);
     
     JButton createipbtn = new JButton("Create input text file.");
-    createipbtn.setAction(action);
+    createipbtn.setToolTipText("Click the button to create input file with given parameters.");
     createipbtn.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         CreateInputPairs c = new CreateInputPairsImpl();
-        c.printInput( seedipbox.getText(), flipBitValue.getSelectedItem().toString(),
+        Object [] success = c.createFile( seedipbox.getText(), 
+            flipBitValue.getSelectedItem().toString(),
             ( Integer )numberofpairs.getSelectedItem(), opfilename.getText() );
+        if( success.length != 2 ) {
+          JOptionPane.showMessageDialog(null, "Something bad happened");
+        } else {
+          JOptionPane.showMessageDialog(null, success[1]);
+        }
       }
     });
-    createipbtn.setBounds(723, 25, 153, 32);
+    createipbtn.setBounds(723, 25, 175, 32);
     frame.getContentPane().add(createipbtn);
-  }
-  
-  private class SwingAction extends AbstractAction {
-    
-    private static final long serialVersionUID = 1L;
-    
-    public SwingAction() {
-      putValue(NAME, "SwingAction");
-      putValue(SHORT_DESCRIPTION, "Some short description");
-    }
-    
-    public void actionPerformed(ActionEvent e) {}
   }
 }

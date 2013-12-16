@@ -1,4 +1,7 @@
 package com.Soham.MSProject.Input;
+
+import java.io.File;
+
 /**
  * This interface will create the input file containing pairs of text. The seed text will be given to the file.
  * And that will be changed for each one of the bits, step by step. That is bits beginning from 1 to 15
@@ -11,5 +14,7 @@ public interface CreateInputPairs
 {
   public void createInputPairsFile(String seed, int combinations, String output_file);
   
-  public void createFile( String seed, String flipend, Integer flips, String file_name );
+  public Object[] createFile( String seed, String flipend, Integer flips, String file_name );
+  
+  public void writeToFile( String seed, String flipend, Integer flips, File file );
 }
