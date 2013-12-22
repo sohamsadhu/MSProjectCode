@@ -12,6 +12,21 @@ import java.io.File;
  */
 public interface CreateInputPairs 
 {
+  /**
+   * Make sure parameters are as per requirement.
+   * @param seed only checked for null.
+   * @param flip_end has to be either "Starting", "Middle" or "Trailing" value.
+   * @param flips int value between 1 and 20, inclusive.
+   * @param file_name just cannot be null.
+   * @return An object array of 2 elements. First element a boolean saying pass or
+   * fail. The second element a string describing the problems. In case of pass, the
+   * second element is empty.
+   */
+  public Object[] checkInputFileOptions( final String seed, final String flip_end, 
+      final int flips, final String file_name);
+  
+  public String[] getFlippedSeeds( final String seed, final String flipend, final int flips );
+  
   public void createInputPairsFile(String seed, int combinations, String output_file);
   
   public Object[] createFile( String seed, String flipend, Integer flips, String file_name );

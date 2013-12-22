@@ -4,18 +4,22 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
 
 import com.Soham.MSProject.Input.CreateInputPairHelper;
+import com.Soham.MSProject.Input.CreateInputPairs;
+import com.Soham.MSProject.Input.CreateInputPairsImpl;
 
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class InputTest 
 {
-  private CreateInputPairHelper cih;
+  private static CreateInputPairHelper cih;
+  private static CreateInputPairs cip;
   
-  @Before
-  public void initialise()
+  @BeforeClass
+  public static void initialise()
   {
     cih = new CreateInputPairHelper();
+    cip = new CreateInputPairsImpl();
   }
   
   @Test
@@ -57,5 +61,27 @@ public class InputTest
     result = cih.listFromEmptyString( 20 );
     assertArrayEquals( result, new String[]{"", " ", "!", "\"", "#", "$", "%", "&", "'", 
         "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2", "3"} );
+  }
+
+  @Test
+  public void testcheckInputFileOptions()
+  {
+    Object[] results = cip.checkInputFileOptions("seed", "Starting", 20, "output_file" );
+    assertEquals( results.length, 2 );
+    assertEquals( "", results[1] );
+    assertEquals( true, results[0] );
+    results = cip.checkInputFileOptions("seed", "something else", 1, "output_file" );
+    assertEquals( "Please enter which end you want the bits to flip. "
+        + "Starting, Middle or Trailing. \n", results[1] );
+    assertEquals( false, results[0] );
+    results = cip.checkInputFileOptions("seed", "something else", 0, "output_file" );
+    assertEquals( "Please enter which end you want the bits to flip. Starting, Middle or Trailing. \n" 
+        + "The number of flips has to be in between 1 and 20, inclusive. \n", results[1] );
+    assertEquals( false, results[0] );
+    results = cip.checkInputFileOptions("seed", "something else", 21, "" );
+    assertEquals( "Please enter which end you want the bits to flip. Starting, Middle or Trailing. \n" 
+        + "The number of flips has to be in between 1 and 20, inclusive. \n"
+        + "The file name to be created cannot be empty.", results[1] );
+    assertEquals( false, results[0] );
   }
 }

@@ -57,10 +57,38 @@ public class CreateInputPairsImpl implements CreateInputPairs
     writePairsToFile( input, combinations, input.length, output_file );
   }
   
-  public String[] getFlippedSeeds( final String seed, final String flipend, 
-      final Integer flips )
+  public String[] flipSeedStarting( final String seed, final int flips )
   {
     return ( new String[] { null } );
+  }
+  
+  public String[] flipSeedMiddle( final String seed, final int flips )
+  {
+    return ( new String[] { null } );
+  }
+  
+  public String[] flipSeedTrailing( final String seed, final int flips )
+  {
+    return ( new String[] { null } );
+  }
+  
+  public String[] getFlippedSeeds( final String seed, final String flipend, 
+      final int flips )
+  {
+    if( 0 == flips ) { // If flips are just 0, no need to flip anything.
+      return new String[]{ seed };
+    }
+    switch( flipend )
+    {
+      case "Starting" :
+        return flipSeedStarting( seed, flips );
+      case "Middle" :
+        return flipSeedMiddle( seed, flips );
+      case "Trailing" :
+        return flipSeedTrailing( seed, flips );
+      default :  // If no choice prescribed, flip bits from starting.
+        return flipSeedStarting( seed, flips );
+    }
   }
   
   public void writeToFile( final String seed, final String flipend, 
@@ -69,13 +97,56 @@ public class CreateInputPairsImpl implements CreateInputPairs
     String [] flipped_seeds = getFlippedSeeds( seed, flipend, flips );
   }
   
-  public Object[] createFile( final String seed, final String flipend, 
+  public Object[] checkInputFileOptions( final String seed, final String flip_end,
+      final int flips, final String file_name)
+  {
+    Object [] checked_result = new Object[]{ true, "" } ;
+    
+    // Make sure all the values are present.
+    if ((seed == null) || (flip_end == null) || (file_name == null))
+    {
+      System.out.println("1");
+      checked_result[0] = false;
+      checked_result[1] = "Please make sure values for all parameters for "
+          + "input file creation are there.";
+      return checked_result; // Since preliminary failure return here.
+    }
+    
+    // Make sure the end to flip bits has been specified properly.
+    if( flip_end.equals("Starting") || flip_end.equals("Middle") || 
+        flip_end.equals("Trailing") ) 
+    { /*Do nothing. Everything is fine. Else, make a note of error.*/}
+    else
+    {
+      checked_result[0] = false;
+      checked_result[1] += "Please enter which end you want the bits to flip. "
+          + "Starting, Middle or Trailing. \n";
+    }
+    
+    // Make sure that flips are in between 0 and 21.
+    if ((flips < 1) || (flips > 20))
+    {
+      checked_result[0] = false;
+      checked_result[1] += "The number of flips has to be in between 1 and 20, inclusive. \n";
+    }
+    
+    // Check the file name is not null or not empty.
+    if ((file_name == null) || (file_name.equals("")))
+    {
+      checked_result[0] = false;
+      checked_result[1] += "The file name to be created cannot be empty.";
+    }
+    return checked_result;
+  }
+  
+  public Object[] createFile( final String seed, final String flip_end, 
       final Integer flips, final String file_name )
   {
-    System.out.println( "Seed " + seed + " flipend " + flipend + " flips " + flips +
+    System.out.println( "Seed " + seed + " flipend " + flip_end + " flips " + flips +
         " file name " + file_name );
-    if( file_name.equals("") ) {  // Check if the file name has been entered.
-      return (new Object[] {false, "Please enter a file name."});
+    Object[] check_result = checkInputFileOptions(seed, flip_end, flips.intValue(), file_name);
+    if( !(( Boolean )check_result[0]) ) {
+      return check_result;  // If one of the parameters is in error, send error message.
     }
     String filename = "";
     try 
@@ -87,7 +158,7 @@ public class CreateInputPairsImpl implements CreateInputPairs
       if (!file.exists()) {
         file.createNewFile();
       }
-      writeToFile( seed, flipend, flips, file );
+      writeToFile( seed, flip_end, flips, file );
     }
     catch (UnsupportedEncodingException uex) 
     {
