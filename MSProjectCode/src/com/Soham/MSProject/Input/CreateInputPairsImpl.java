@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 
 public class CreateInputPairsImpl implements CreateInputPairs 
 {  
@@ -57,44 +58,67 @@ public class CreateInputPairsImpl implements CreateInputPairs
     writePairsToFile( input, combinations, input.length, output_file );
   }
   
-  public String[] flipSeedStarting( final String seed, final int flips )
+  private String[] flipSeedStarting( final byte[] seed, final int flips )
   {
     return ( new String[] { null } );
   }
   
-  public String[] flipSeedMiddle( final String seed, final int flips )
+  private String[] flipSeedMiddle( final byte[] seed, final int flips )
   {
     return ( new String[] { null } );
   }
   
-  public String[] flipSeedTrailing( final String seed, final int flips )
+  public String[] flipSeedTrailing( final byte[] seed, final int flips )
+      throws UnsupportedEncodingException
   {
-    return ( new String[] { null } );
+    String[] list_flipped_strings = new String[ flips + 1 ];
+    list_flipped_strings[0] =  new String( seed, "UTF-8" );
+    int flip = flips;
+    byte [] temp;
+    for( int i = 0; i < ((flips / 8) + 1); i++ )
+    {
+      flip = (flip > 8) ? 8 : flip;
+      for( int j = 0; j < flip; j++ )
+      {
+        temp = seed;
+        temp[temp.length - (i + 1)] = (byte) (temp[temp.length - (i + 1)] ^ (1 << j));
+        list_flipped_strings[ i ] = new String( temp, "UTF-8" );
+      }
+    }
+    return list_flipped_strings;
   }
   
-  public String[] getFlippedSeeds( final String seed, final String flipend, 
-      final int flips )
+  public String[] getFlippedSeeds( final byte[] seed, final String flipend, 
+      final int flips ) throws UnsupportedEncodingException
   {
     if( 0 == flips ) { // If flips are just 0, no need to flip anything.
-      return new String[]{ seed };
+      return new String[]{ new String(seed, "UTF-8") };
     }
+    // Make sure that flips are not more than number of bits present.
+    int flip = (flips > (seed.length * 8)) ? (seed.length * 8) : flips;
     switch( flipend )
     {
       case "Starting" :
-        return flipSeedStarting( seed, flips );
+        return flipSeedStarting( seed, flip );
       case "Middle" :
-        return flipSeedMiddle( seed, flips );
+        return flipSeedMiddle( seed, flip );
       case "Trailing" :
-        return flipSeedTrailing( seed, flips );
+        return flipSeedTrailing( seed, flip );
       default :  // If no choice prescribed, flip bits from starting.
-        return flipSeedStarting( seed, flips );
+        return flipSeedStarting( seed, flip );
     }
   }
   
   public void writeToFile( final String seed, final String flipend, 
-      final Integer flips, final File file )
+      final Integer flips, final File file ) throws UnsupportedEncodingException
   {
-    String [] flipped_seeds = getFlippedSeeds( seed, flipend, flips );
+    byte[] input;
+    try {
+      input = seed.getBytes("utf-8");
+    } catch( UnsupportedEncodingException uex ) {
+      throw uex;
+    }
+    String [] flipped_seeds = getFlippedSeeds( input, flipend, flips );
   }
   
   public Object[] checkInputFileOptions( final String seed, final String flip_end,
@@ -163,7 +187,8 @@ public class CreateInputPairsImpl implements CreateInputPairs
     catch (UnsupportedEncodingException uex) 
     {
       uex.printStackTrace();
-      return (new Object[] { false, "Please provide a valid name for input file to be created." });
+      return (new Object[] { false, "Either input file name is not valid file path.\n"
+          + "Or the input string provided could not be encoded." });
     }
     catch( IOException iex )
     {
@@ -175,29 +200,13 @@ public class CreateInputPairsImpl implements CreateInputPairs
   
   public static void main(String [] args) 
   {
-    if( args.length < 3 )
+    CreateInputPairsImpl cip = new CreateInputPairsImpl();
+    byte b = 0x00;
+    for(int i = 0; i < 8; i++ ) 
     {
-      System.out.println("The number of arguments are incorrect.");
-      System.out.println("Usage: java CreateInputPairsImpl \"seed\" "
-          + "\"number of combinations\" \"output file name\"");
-      System.exit(0);
+      byte c = (byte) (b ^ (1 << i)); 
+      System.out.printf("%02X\n", c);
     }
-    String seed = args[0];
-    int combinations = 0;
-    try 
-    {
-      combinations = Integer.parseInt(args[1]);
-    } 
-    catch( NumberFormatException nex ) 
-    {
-      System.out.println("The second argument to program should be a function.");
-      System.out.println("Usage: java CreateInputPairsImpl \"seed\" "
-          + "\"number of combinations\" \"output file name\"");
-      nex.printStackTrace();
-      System.exit(0);
-    }
-    String output_file = args[2];
-    CreateInputPairs cip = new CreateInputPairsImpl();
-    cip.createInputPairsFile(seed, combinations, output_file);
   }
+
 }

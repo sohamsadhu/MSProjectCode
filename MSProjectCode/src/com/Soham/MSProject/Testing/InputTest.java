@@ -3,6 +3,8 @@ package com.Soham.MSProject.Testing;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
 
+import java.io.UnsupportedEncodingException;
+
 import com.Soham.MSProject.Input.CreateInputPairHelper;
 import com.Soham.MSProject.Input.CreateInputPairs;
 import com.Soham.MSProject.Input.CreateInputPairsImpl;
@@ -83,5 +85,21 @@ public class InputTest
         + "The number of flips has to be in between 1 and 20, inclusive. \n"
         + "The file name to be created cannot be empty.", results[1] );
     assertEquals( false, results[0] );
+  }
+  
+  @Test
+  public void testflipSeedTrailing()
+  {
+    CreateInputPairsImpl cipl = new CreateInputPairsImpl();
+    byte[] b = new byte[]{0x00};
+    try {
+      String[] results = cipl.flipSeedTrailing( b, 7 );
+      for( String s : results ) {
+        System.out.println( s );
+      }
+    } catch (UnsupportedEncodingException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
 }

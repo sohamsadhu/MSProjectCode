@@ -1,6 +1,7 @@
 package com.Soham.MSProject.Input;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 
 /**
  * This interface will create the input file containing pairs of text. The seed text will be given to the file.
@@ -25,11 +26,25 @@ public interface CreateInputPairs
   public Object[] checkInputFileOptions( final String seed, final String flip_end, 
       final int flips, final String file_name);
   
-  public String[] getFlippedSeeds( final String seed, final String flipend, final int flips );
+  /**
+   * Returns the array of strings with bits toggled from end specified. For example if a string 
+   * provided happens to be byte 10000000 and the flipend is trailing. Then at flips 2, the 
+   * return array would be [10000000, 10000001, 10000010]. So the original seed is the head of 
+   * the list, and the rest follow. If the bits to be modified provided are more than those present
+   * then all the bits will be flipped.
+   * @param seed The actual input string provided for bit flipping.
+   * @param flipend determines the bits to be flipped from which end.
+   * @param flips the number of bits that will be flipped. This should be between 1 and 20, inclusive.
+   * @return Array of strings, with bits flipped.
+   * @throws UnsupportedEncodingException in case byte to string conversion does not work out.
+   */
+  public String[] getFlippedSeeds( final byte[] seed, final String flipend, 
+      final int flips ) throws UnsupportedEncodingException;
   
   public void createInputPairsFile(String seed, int combinations, String output_file);
   
   public Object[] createFile( String seed, String flipend, Integer flips, String file_name );
   
-  public void writeToFile( String seed, String flipend, Integer flips, File file );
+  public void writeToFile( String seed, String flipend, Integer flips, 
+      File file ) throws UnsupportedEncodingException;
 }
