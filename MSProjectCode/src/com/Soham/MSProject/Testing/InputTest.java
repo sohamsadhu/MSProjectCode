@@ -91,9 +91,9 @@ public class InputTest
   public void testflipSeedTrailing()
   {
     CreateInputPairsImpl cipl = new CreateInputPairsImpl();
-    byte[] b = new byte[]{0x00};
+    byte[] b = new byte[]{0x41, 0x42};
     try {
-      String[] results = cipl.flipSeedTrailing( b, 7 );
+      String[] results = cipl.flipSeedTrailing( b, 12 );
       for( String s : results ) {
         System.out.println( s );
       }

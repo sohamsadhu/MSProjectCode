@@ -71,21 +71,28 @@ public class CreateInputPairsImpl implements CreateInputPairs
   public String[] flipSeedTrailing( final byte[] seed, final int flips )
       throws UnsupportedEncodingException
   {
-    String[] list_flipped_strings = new String[ flips + 1 ];
-    list_flipped_strings[0] =  new String( seed, "UTF-8" );
+    ArrayList<String> list_flipped_strings = new ArrayList< String >( flips + 1 );
+    list_flipped_strings.add( new String( seed, "UTF-8" ));
     int flip = flips;
-    byte [] temp;
-    for( int i = 0; i < ((flips / 8) + 1); i++ )
+    for( int i = 0; i < (((flips-1) / 8) + 1); i++ )
     {
       flip = (flip > 8) ? 8 : flip;
       for( int j = 0; j < flip; j++ )
       {
-        temp = seed;
+        byte [] temp = new byte[ seed.length ];
+        System.arraycopy( seed, 0, temp, 0, seed.length );
+        System.out.println("inside loop temp "+ new String( temp, "UTF-8" ));
         temp[temp.length - (i + 1)] = (byte) (temp[temp.length - (i + 1)] ^ (1 << j));
-        list_flipped_strings[ i ] = new String( temp, "UTF-8" );
+        System.out.printf("inside loop temp %02X %02X\n", temp[0], temp[1]);
+        list_flipped_strings.add( new String( temp, "UTF-8" ));
       }
+      flip = flips - 8;
     }
-    return list_flipped_strings;
+    String [] results = new String[ list_flipped_strings.size() ];    
+    for( int i = 0; i < list_flipped_strings.size(); i++ ) {
+      results[i] = list_flipped_strings.get( i );
+    }
+    return results;
   }
   
   public String[] getFlippedSeeds( final byte[] seed, final String flipend, 
