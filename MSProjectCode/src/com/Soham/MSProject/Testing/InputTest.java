@@ -90,10 +90,9 @@ public class InputTest
   @Test
   public void testflipSeedTrailing()
   {
-    CreateInputPairsImpl cipl = new CreateInputPairsImpl();
-    byte[] b = new byte[]{0x41, 0x42};
+    byte[] b = new byte[]{0x41, 0x42, 0x43};
     try {
-      String[] results = cipl.flipSeedTrailing( b, 12 );
+      String[] results = cip.getFlippedSeeds( b, "Starting", 24 );
       for( String s : results ) {
         System.out.println( s );
       }

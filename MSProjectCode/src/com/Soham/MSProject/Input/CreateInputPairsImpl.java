@@ -59,16 +59,6 @@ public class CreateInputPairsImpl implements CreateInputPairs
   }
   
   private String[] flipSeedStarting( final byte[] seed, final int flips )
-  {
-    return ( new String[] { null } );
-  }
-  
-  private String[] flipSeedMiddle( final byte[] seed, final int flips )
-  {
-    return ( new String[] { null } );
-  }
-  
-  public String[] flipSeedTrailing( final byte[] seed, final int flips )
       throws UnsupportedEncodingException
   {
     ArrayList<String> list_flipped_strings = new ArrayList< String >( flips + 1 );
@@ -76,17 +66,47 @@ public class CreateInputPairsImpl implements CreateInputPairs
     int flip = flips;
     for( int i = 0; i < (((flips-1) / 8) + 1); i++ )
     {
-      flip = (flip > 8) ? 8 : flip;
-      for( int j = 0; j < flip; j++ )
+      int round = (flip > 8) ? 8 : flip;
+      for( int j = 0; j < round; j++ )
       {
         byte [] temp = new byte[ seed.length ];
         System.arraycopy( seed, 0, temp, 0, seed.length );
-        System.out.println("inside loop temp "+ new String( temp, "UTF-8" ));
-        temp[temp.length - (i + 1)] = (byte) (temp[temp.length - (i + 1)] ^ (1 << j));
-        System.out.printf("inside loop temp %02X %02X\n", temp[0], temp[1]);
+        temp[i] = (byte) (temp[i] ^ (0x80 >> j));
+        System.out.printf("inside loop temp %02X %02X %02X\n", temp[0], temp[1], temp[2]);
         list_flipped_strings.add( new String( temp, "UTF-8" ));
       }
-      flip = flips - 8;
+      flip = flip - 8;
+    }
+    String [] results = new String[ list_flipped_strings.size() ];    
+    for( int i = 0; i < list_flipped_strings.size(); i++ ) {
+      results[i] = list_flipped_strings.get( i );
+    }
+    return results;
+  }
+  
+  private String[] flipSeedMiddle( final byte[] seed, final int flips )
+  {
+    return ( new String[] { null } );
+  }
+  
+  private String[] flipSeedTrailing( final byte[] seed, final int flips )
+      throws UnsupportedEncodingException
+  {
+    ArrayList<String> list_flipped_strings = new ArrayList< String >( flips + 1 );
+    list_flipped_strings.add( new String( seed, "UTF-8" ));
+    int flip = flips;
+    for( int i = 0; i < (((flips-1) / 8) + 1); i++ )
+    {
+      int round = (flip > 8) ? 8 : flip;
+      for( int j = 0; j < round; j++ )
+      {
+        byte [] temp = new byte[ seed.length ];
+        System.arraycopy( seed, 0, temp, 0, seed.length );
+        temp[temp.length - (i + 1)] = (byte) (temp[temp.length - (i + 1)] ^ (1 << j));
+        System.out.printf("inside loop temp %02X %02X %02X\n", temp[0], temp[1], temp[2]);
+        list_flipped_strings.add( new String( temp, "UTF-8" ));
+      }
+      flip = flip - 8;
     }
     String [] results = new String[ list_flipped_strings.size() ];    
     for( int i = 0; i < list_flipped_strings.size(); i++ ) {
