@@ -15,6 +15,10 @@ import com.Soham.MSProject.Input.CreateInputPairsImpl;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class Experiment {
 
@@ -91,11 +95,35 @@ public class Experiment {
     final JComboBox<Integer> numberofpairs = new JComboBox<Integer>();
     numberofpairs.setToolTipText("This selects the number of strings with flips to produce.");
     lblNumberOfPairs.setLabelFor(numberofpairs);
-    numberofpairs.setModel(new DefaultComboBoxModel<Integer>
-      (new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}));
+    final List< DefaultComboBoxModel<Integer> > num_pair_model = 
+        new ArrayList< DefaultComboBoxModel<Integer> >( 2 );
+    num_pair_model.add( new DefaultComboBoxModel<Integer>( new Integer[]
+        {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20} ));
+    num_pair_model.add( new DefaultComboBoxModel<Integer>( new Integer[] {2, 4, 6, 8, 10, 12, 14, 16, 18, 20} ));
+    numberofpairs.setModel( num_pair_model.get(0) );
     numberofpairs.setMaximumRowCount(20);
     numberofpairs.setBounds(121, 35, 56, 22);
     frame.getContentPane().add(numberofpairs);
+    
+    JLabel lblFlipBits = new JLabel("Flip bits");
+    lblFlipBits.setBounds(713, 3, 56, 19);
+    frame.getContentPane().add(lblFlipBits);
+    
+    final JComboBox<GroupOfFlippedBits> flipBitValue = new JComboBox<GroupOfFlippedBits>();
+    flipBitValue.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        String selected = flipBitValue.getSelectedItem().toString();
+        if(selected.equals("Trailing")) {
+          numberofpairs.setModel( num_pair_model.get(1) );
+        } else {
+          numberofpairs.setModel( num_pair_model.get(0) );
+        }
+      }
+    });
+    flipBitValue.setModel(new DefaultComboBoxModel<GroupOfFlippedBits>(GroupOfFlippedBits.values()));
+    flipBitValue.setToolTipText("This will select from which end the flipping to start.");
+    flipBitValue.setBounds(781, 0, 92, 22);
+    frame.getContentPane().add(flipBitValue);
     
     JLabel lblOutputFile = new JLabel("Output File");
     lblOutputFile.setBounds(211, 35, 79, 16);
@@ -108,16 +136,6 @@ public class Experiment {
     opfilename.setBounds(279, 35, 421, 22);
     frame.getContentPane().add(opfilename);
     opfilename.setColumns(10);
-    
-    JLabel lblFlipBits = new JLabel("Flip bits");
-    lblFlipBits.setBounds(713, 3, 56, 19);
-    frame.getContentPane().add(lblFlipBits);
-    
-    final JComboBox<GroupOfFlippedBits> flipBitValue = new JComboBox<GroupOfFlippedBits>();
-    flipBitValue.setModel(new DefaultComboBoxModel<GroupOfFlippedBits>(GroupOfFlippedBits.values()));
-    flipBitValue.setToolTipText("This will select from which end the flipping to start.");
-    flipBitValue.setBounds(781, 0, 92, 22);
-    frame.getContentPane().add(flipBitValue);
     
     JButton createipbtn = new JButton("Create input text file.");
     createipbtn.setToolTipText("Click the button to create input file with given parameters.");

@@ -92,7 +92,7 @@ public class InputTest
   {
     byte[] b = new byte[]{0x41, 0x42, 0x43};
     try {
-      String[] results = cip.getFlippedSeeds( b, "Starting", 24 );
+      String[] results = cip.getFlippedSeeds( b, "Middle", 10 );
       for( String s : results ) {
         System.out.println( s );
       }

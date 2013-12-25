@@ -85,8 +85,29 @@ public class CreateInputPairsImpl implements CreateInputPairs
   }
   
   private String[] flipSeedMiddle( final byte[] seed, final int flips )
+      throws UnsupportedEncodingException
   {
-    return ( new String[] { null } );
+    int start_pos = ((seed.length * 8) / 2) - (flips / 2);
+    int end_pos = start_pos + flips; // Make sure to have the loop strictly <, not to go over.
+    ArrayList<String> list_flipped_strings = new ArrayList< String >( flips + 1 );
+    list_flipped_strings.add( new String( seed, "UTF-8" ));
+    byte[] combinations = new byte[]{(byte)0x80, (byte)0x40, (byte)0x20, 
+        (byte)0x10, (byte)0x08, (byte)0x04, (byte)0x02, (byte)0x01};
+    for( ; start_pos < end_pos; start_pos++ )
+    {
+      byte [] temp = new byte[ seed.length ];
+      System.arraycopy( seed, 0, temp, 0, seed.length );
+      int bytepos = start_pos / 8;  // Find which byte.
+      int bitpos  = start_pos % 8;  // Find bit position.
+      temp[bytepos] = (byte) (temp[bytepos] ^ combinations[bitpos]);
+      System.out.printf("inside loop temp %02X %02X %02X\n", temp[0], temp[1], temp[2]);
+      list_flipped_strings.add( new String( temp, "UTF-8" ));
+    }
+    String [] results = new String[ list_flipped_strings.size() ];    
+    for( int i = 0; i < list_flipped_strings.size(); i++ ) {
+      results[i] = list_flipped_strings.get( i );
+    }
+    return results;
   }
   
   private String[] flipSeedTrailing( final byte[] seed, final int flips )
