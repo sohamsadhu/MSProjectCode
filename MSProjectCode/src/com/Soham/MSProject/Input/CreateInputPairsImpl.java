@@ -72,7 +72,6 @@ public class CreateInputPairsImpl implements CreateInputPairs
         byte [] temp = new byte[ seed.length ];
         System.arraycopy( seed, 0, temp, 0, seed.length );
         temp[i] = (byte) (temp[i] ^ (0x80 >> j));
-        System.out.printf("inside loop temp %02X %02X %02X\n", temp[0], temp[1], temp[2]);
         list_flipped_strings.add( new String( temp, "UTF-8" ));
       }
       flip = flip - 8;
@@ -87,6 +86,9 @@ public class CreateInputPairsImpl implements CreateInputPairs
   private String[] flipSeedMiddle( final byte[] seed, final int flips )
       throws UnsupportedEncodingException
   {
+    if( flips % 2 != 0 ) {  //Piggyback the exception.
+      throw new UnsupportedEncodingException("Number of flips, for middle flipping should be even.");
+    }
     int start_pos = ((seed.length * 8) / 2) - (flips / 2);
     int end_pos = start_pos + flips; // Make sure to have the loop strictly <, not to go over.
     ArrayList<String> list_flipped_strings = new ArrayList< String >( flips + 1 );
@@ -100,7 +102,6 @@ public class CreateInputPairsImpl implements CreateInputPairs
       int bytepos = start_pos / 8;  // Find which byte.
       int bitpos  = start_pos % 8;  // Find bit position.
       temp[bytepos] = (byte) (temp[bytepos] ^ combinations[bitpos]);
-      System.out.printf("inside loop temp %02X %02X %02X\n", temp[0], temp[1], temp[2]);
       list_flipped_strings.add( new String( temp, "UTF-8" ));
     }
     String [] results = new String[ list_flipped_strings.size() ];    
@@ -124,7 +125,6 @@ public class CreateInputPairsImpl implements CreateInputPairs
         byte [] temp = new byte[ seed.length ];
         System.arraycopy( seed, 0, temp, 0, seed.length );
         temp[temp.length - (i + 1)] = (byte) (temp[temp.length - (i + 1)] ^ (1 << j));
-        System.out.printf("inside loop temp %02X %02X %02X\n", temp[0], temp[1], temp[2]);
         list_flipped_strings.add( new String( temp, "UTF-8" ));
       }
       flip = flip - 8;
@@ -139,8 +139,11 @@ public class CreateInputPairsImpl implements CreateInputPairs
   public String[] getFlippedSeeds( final byte[] seed, final String flipend, 
       final int flips ) throws UnsupportedEncodingException
   {
-    if( 0 == flips ) { // If flips are just 0, no need to flip anything.
+    if( flips < 1 ) { // If flips are just 0, no need to flip anything.
       return new String[]{ new String(seed, "UTF-8") };
+    }
+    if( seed == null ) {
+      throw new UnsupportedEncodingException("The seed for the strings cannot be null.");
     }
     // Make sure that flips are not more than number of bits present.
     int flip = (flips > (seed.length * 8)) ? (seed.length * 8) : flips;
