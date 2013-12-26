@@ -41,7 +41,7 @@ public interface CreateInputPairs
   public String[] getFlippedSeeds( final byte[] seed, final String flipend, 
       final int flips ) throws UnsupportedEncodingException;
   
-  public void createInputPairsFile(String seed, int combinations, String output_file);
+  public void createInputPairs( final String[] seeds, final int combinations );
   
   public Object[] createFile( String seed, String flipend, Integer flips, String file_name );
   

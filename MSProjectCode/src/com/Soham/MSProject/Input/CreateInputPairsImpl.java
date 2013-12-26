@@ -42,20 +42,9 @@ public class CreateInputPairsImpl implements CreateInputPairs
     }
   }
   
-  public void createInputPairsFile(String seed, int combinations, String output_file) 
+  public void createInputPairs(final String[] seeds, final int combinations) 
   {
-    byte[] input = new byte[]{};
-    try 
-    {
-      input = seed.getBytes("utf-8");
-    } 
-    catch (UnsupportedEncodingException e) 
-    {
-      e.printStackTrace();
-      System.out.println("The given seed could not be encoded. Exiting now.");
-      return;
-    }
-    writePairsToFile( input, combinations, input.length, output_file );
+    String[][] result = new String[combinations * (combinations - 1) / 2][2];
   }
   
   private String[] flipSeedStarting( final byte[] seed, final int flips )
@@ -170,6 +159,7 @@ public class CreateInputPairsImpl implements CreateInputPairs
       throw uex;
     }
     String [] flipped_seeds = getFlippedSeeds( input, flipend, flips );
+    createInputPairs( flipped_seeds, flips );
   }
   
   public Object[] checkInputFileOptions( final String seed, final String flip_end,
