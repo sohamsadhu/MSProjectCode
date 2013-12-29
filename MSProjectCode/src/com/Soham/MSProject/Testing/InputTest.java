@@ -44,6 +44,34 @@ public class InputTest
   }
   
   @Test
+  public void testcreateInputPairs()
+  {
+    String[] input = new String[]{ "a", "b", "c" }; // Normal function
+    String[][] output = cip.createInputPairs( input );
+    assertEquals( 3, output.length );
+    assertArrayEquals( output[0], new String[] {"a", "b"} );
+    assertArrayEquals( output[1], new String[] {"a", "c"} );
+    assertArrayEquals( output[2], new String[] {"b", "c"} );
+    input = new String[] {"a", "b"};  // Edge case just two inputs.
+    output = cip.createInputPairs( input );
+    assertEquals( 1, output.length );
+    assertArrayEquals( output[0], new String[] {"a", "b"} );
+    input = new String[]{ "a", "b", "c", "d", "e" }; // Scale and then check.
+    output = cip.createInputPairs( input );
+    assertEquals( 10, output.length );
+    assertArrayEquals( output[0], new String[]{"a", "b"} );
+    assertArrayEquals( output[1], new String[]{"a", "c"} );
+    assertArrayEquals( output[2], new String[]{"a", "d"} );
+    assertArrayEquals( output[3], new String[]{"a", "e"} );
+    assertArrayEquals( output[4], new String[]{"b", "c"} );
+    assertArrayEquals( output[5], new String[]{"b", "d"} );
+    assertArrayEquals( output[6], new String[]{"b", "e"} );
+    assertArrayEquals( output[7], new String[]{"c", "d"} );
+    assertArrayEquals( output[8], new String[]{"c", "e"} );
+    assertArrayEquals( output[9], new String[]{"d", "e"} );
+  }
+  
+  @Test
   public void flipSeedStarting()
   {
     try 

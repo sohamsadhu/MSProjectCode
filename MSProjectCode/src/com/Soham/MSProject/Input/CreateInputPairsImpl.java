@@ -42,9 +42,21 @@ public class CreateInputPairsImpl implements CreateInputPairs
     }
   }
   
-  public void createInputPairs(final String[] seeds, final int combinations) 
+  public String[][] createInputPairs( final String[] seeds ) 
   {
-    String[][] result = new String[combinations * (combinations - 1) / 2][2];
+    final int num_seeds = seeds.length;
+    String[][] result = new String[num_seeds * (num_seeds - 1) / 2][2];
+    int index = 0;
+    for( int i = 0; i < (num_seeds - 1); i++ ) 
+    {
+      for( int j = i + 1; j < num_seeds; j++ )
+      {
+        result[index][0] = seeds[i];
+        result[index][1] = seeds[j];
+        index++;
+      }
+    }
+    return result;
   }
   
   private String[] flipSeedStarting( final byte[] seed, final int flips )
@@ -159,7 +171,7 @@ public class CreateInputPairsImpl implements CreateInputPairs
       throw uex;
     }
     String [] flipped_seeds = getFlippedSeeds( input, flipend, flips );
-    createInputPairs( flipped_seeds, flips );
+    createInputPairs( flipped_seeds );
   }
   
   public Object[] checkInputFileOptions( final String seed, final String flip_end,
@@ -241,13 +253,9 @@ public class CreateInputPairsImpl implements CreateInputPairs
   
   public static void main(String [] args) 
   {
-    CreateInputPairsImpl cip = new CreateInputPairsImpl();
-    byte b = 0x00;
-    for(int i = 0; i < 8; i++ ) 
-    {
-      byte c = (byte) (b ^ (1 << i)); 
-      System.out.printf("%02X\n", c);
-    }
+    System.out.println("a");
+    System.out.println("\n");
+    System.out.println("b");
   }
 
 }

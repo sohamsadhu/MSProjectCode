@@ -41,7 +41,13 @@ public interface CreateInputPairs
   public String[] getFlippedSeeds( final byte[] seed, final String flipend, 
       final int flips ) throws UnsupportedEncodingException;
   
-  public void createInputPairs( final String[] seeds, final int combinations );
+  /**
+   * Makes all pairs possibles ignoring the order, for the strings provided. The second dimension in 
+   * return value is 2 to make a pair. And the first dimension is <sup>input length</sup>C<sub>2</sub>.
+   * @param seeds the list of the flipped bit strings, that you want to make pairs of.
+   * @return a 2D array, with each entry having two entries of strings making pair.
+   */
+  public String[][] createInputPairs( final String[] seeds );
   
   public Object[] createFile( String seed, String flipend, Integer flips, String file_name );
   
