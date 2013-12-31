@@ -72,6 +72,18 @@ public class InputTest
   }
   
   @Test
+  public void testnewLinePresent()
+  {
+    assertEquals( false, cip.newLinePresent( new String[]{"a", "b"}));
+    assertEquals( true, cip.newLinePresent( new String[]{"\n"}));
+    assertEquals( false, cip.newLinePresent( new String[]{"blah", "foo"}));
+    assertEquals( true, cip.newLinePresent( new String[]{"blah", "fo\no"}));
+    assertEquals( true, cip.newLinePresent( new String[]{"\nblah", "foo"}));
+    assertEquals( true, cip.newLinePresent( new String[]{"blah \n", "foo"}));
+    assertEquals( true, cip.newLinePresent( new String[]{"blah\n", "foo"}));
+  }
+  
+  @Test
   public void flipSeedStarting()
   {
     try 

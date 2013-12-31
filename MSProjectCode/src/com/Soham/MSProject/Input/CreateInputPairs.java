@@ -49,8 +49,36 @@ public interface CreateInputPairs
    */
   public String[][] createInputPairs( final String[] seeds );
   
+  /**
+   * This is the method that will create the file, check the seeds, flips and make the file
+   * by calling another function to write into the file.
+   * @param seed the starting string that needs to be flipped and experimented with.
+   * @param flipend, the end "Starting", "Middle", "Trailing" where you want the bits flipped.
+   * @param flips, the number of flips or toggle you want to give to the seed.
+   * @param file_name, the name of the input file.
+   * @return an object array with first thing being boolean success or fail, and the second
+   * thing being a string with the failure message.
+   */
   public Object[] createFile( String seed, String flipend, Integer flips, String file_name );
   
-  public void writeToFile( String seed, String flipend, Integer flips, 
+  /**
+   * Will write to the file object given, the pairs with new line separation, and a blank new
+   * line between the pairs.
+   * @param seed, the string that will spawn the flipped strings to write into the file.
+   * @param flipend, the end "Starting", "Middle", "Trailing" where you want the bits flipped.
+   * @param flips, the number of flips or toggle you want to give to the seed.
+   * @param file, the actual file object in which you write the results.
+   * @return a boolean success or failure.
+   * @throws UnsupportedEncodingException
+   */
+  public boolean writeToFile( String seed, String flipend, Integer flips, 
       File file ) throws UnsupportedEncodingException;
+  
+  /**
+   * Checks if the strings in the given array have a new line character. This is important since,
+   * the experiment setup takes new line as separator, and extra new line can confuse it.
+   * @param flipped_seeds array of strings, to be checked for new line.
+   * @return boolean true if new line present in any one string, else false.
+   */
+  public boolean newLinePresent( final String[] flipped_seeds );
 }

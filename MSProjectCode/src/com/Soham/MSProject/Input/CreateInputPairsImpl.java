@@ -10,35 +10,26 @@ import java.util.ArrayList;
 
 public class CreateInputPairsImpl implements CreateInputPairs 
 {  
-  public void writePairsToFile( byte [] input, int combinations, int encoded_length,
-      String output_file)
+  private boolean writePairsToFile( String[][] input, File file )
   {
     try
     {
-      File file = new File(output_file + ".txt");
-      if (!file.exists()) {
-        file.createNewFile();
-      }
       FileWriter fw = new FileWriter(file.getAbsoluteFile());
       BufferedWriter bw = new BufferedWriter(fw);
-      String something;
-      byte temp = input[encoded_length - 1];
-      for( int i = 0; i < 8; i++ ) 
+      for( int i = 0; i < input.length; i++ ) 
       {
-        byte b = (byte) (temp ^ (1 << i));
-        input[encoded_length - 1] = b;
-        String s = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
-        something = new String(input);
-        bw.write(something); bw.newLine();
-        bw.write(s); bw.newLine();
+        bw.write( input[i][0] ); bw.newLine();
+        bw.write( input[i][1] ); bw.newLine(); bw.newLine();
       }
       bw.close();
       fw.close();
+      return true;
     } 
     catch (IOException e)
     {
-      System.out.println("The input file could not be created.");
+      System.err.println("The input file could not be opened.");
       e.printStackTrace();
+      return false;
     }
   }
   
@@ -112,6 +103,17 @@ public class CreateInputPairsImpl implements CreateInputPairs
     return results;
   }
   
+  /**
+   * Returns the array of strings with bits toggled from end. For example if a string provided 
+   * happens to be byte 10000000 then at flips 2, the return array would be [10000000, 10000001,
+   * 10000010]. So the original seed is the head of the list, and the rest follow. If flip is 
+   * @param seed The original string, which will be first entry in the return array.
+   * @param flips Determines the number of flips to bits and hence the length of return array.
+   * If the number of flips is zero, then the list is only the seed string with length one.
+   * If the number of flips > number of bits present in seed, then all the bits are flipped.
+   * @return Array of string/s that have one bit toggled from the original one. The toggling
+   * starts from the end and proceeds towards head.  
+   */
   private String[] flipSeedTrailing( final byte[] seed, final int flips )
       throws UnsupportedEncodingException
   {
@@ -161,7 +163,15 @@ public class CreateInputPairsImpl implements CreateInputPairs
     }
   }
   
-  public void writeToFile( final String seed, final String flipend, 
+  public boolean newLinePresent( final String[] flipped_seeds )
+  {
+    for( String s : flipped_seeds ) {
+      if(s.contains("\n")) { return true; }
+    }
+    return false;
+  }
+  
+  public boolean writeToFile( final String seed, final String flipend, 
       final Integer flips, final File file ) throws UnsupportedEncodingException
   {
     byte[] input;
@@ -171,7 +181,16 @@ public class CreateInputPairsImpl implements CreateInputPairs
       throw uex;
     }
     String [] flipped_seeds = getFlippedSeeds( input, flipend, flips );
-    createInputPairs( flipped_seeds );
+    if( !newLinePresent( flipped_seeds ))
+    {
+      String [][] input_pairs = createInputPairs( flipped_seeds );
+      return writePairsToFile( input_pairs, file );
+    }
+    else 
+    {
+      System.err.println("The flips gave rise to ");
+      return false;
+    }
   }
   
   public Object[] checkInputFileOptions( final String seed, final String flip_end,
@@ -225,6 +244,7 @@ public class CreateInputPairsImpl implements CreateInputPairs
     if( !(( Boolean )check_result[0]) ) {
       return check_result;  // If one of the parameters is in error, send error message.
     }
+    boolean write_success = false;
     String filename = "";
     try 
     {
@@ -235,7 +255,7 @@ public class CreateInputPairsImpl implements CreateInputPairs
       if (!file.exists()) {
         file.createNewFile();
       }
-      writeToFile( seed, flip_end, flips, file );
+      write_success = writeToFile( seed, flip_end, flips, file );
     }
     catch (UnsupportedEncodingException uex) 
     {
@@ -248,14 +268,10 @@ public class CreateInputPairsImpl implements CreateInputPairs
       iex.printStackTrace();
       return (new Object[] { false, "Input file creation failed. Could not create or write to the file." });
     }
-    return (new Object[] {true, "Input file "+ filename +" successfully created."});
+    if( write_success ) {
+      return (new Object[] {write_success, "Input file "+ filename +" successfully created."});
+    } else {
+      return (new Object[] {write_success, "Input file could not be created."});
+    }
   }
-  
-  public static void main(String [] args) 
-  {
-    System.out.println("a");
-    System.out.println("\n");
-    System.out.println("b");
-  }
-
 }
