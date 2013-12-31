@@ -238,8 +238,6 @@ public class CreateInputPairsImpl implements CreateInputPairs
   public Object[] createFile( final String seed, final String flip_end, 
       final Integer flips, final String file_name )
   {
-    System.out.println( "Seed " + seed + " flipend " + flip_end + " flips " + flips +
-        " file name " + file_name );
     Object[] check_result = checkInputFileOptions(seed, flip_end, flips.intValue(), file_name);
     if( !(( Boolean )check_result[0]) ) {
       return check_result;  // If one of the parameters is in error, send error message.
