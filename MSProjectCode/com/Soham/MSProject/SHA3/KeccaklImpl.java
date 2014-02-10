@@ -2,15 +2,13 @@ package com.Soham.MSProject.SHA3;
 
 public class KeccaklImpl implements Keccak 
 {
-  private int width;  
-  private byte[][][] state;
+  private int width;
   
   public boolean setWidth( int length )
   {
     if ((length > -1) && (length < 7))
     {
       width = (int)Math.pow(2, length);
-      state = new byte[5][5][width];
       return true;
     }
     else {
