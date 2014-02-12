@@ -1,5 +1,10 @@
 package com.Soham.MSProject.Input;
 
+import org.apache.commons.codec.binary.Hex;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 public class CreateInputFiles 
@@ -23,6 +28,27 @@ public class CreateInputFiles
     return flipped_bytes;
   }
   
+  public void writePairsToFiles( String folder, byte[][] flipped_bits )
+  {
+    int length = flipped_bits.length ;
+    for( int i = 1; i < length; i++ )
+    {
+      File f = new File("./"+ folder +"/"+ i +".txt");
+      f.getParentFile().mkdirs();
+      try 
+      {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(f.getAbsoluteFile()));
+        bw.write( Hex.encodeHexString( flipped_bits[0] ));
+        bw.newLine();
+        bw.write( Hex.encodeHexString( flipped_bits[i] ));
+        bw.close();
+      } 
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+  
   public void createStartingFlippedFiles( String input, String num_of_flips )
   {
     byte[] ip;
@@ -30,13 +56,7 @@ public class CreateInputFiles
     {
       ip = input.getBytes("utf-8");
       byte[][] flipped_collection = getStartingFlippedBytes( ip, num_of_flips );
-      for( byte[] b : flipped_collection )
-      {
-        for( byte op : b ){
-          System.out.printf("%02X",op);
-        }
-        System.out.println();
-      }
+      writePairsToFiles( "Input/Start", flipped_collection);      
     } 
     catch( UnsupportedEncodingException uex ) {
       System.err.println("Something went wrong in encoding the starting flips to bytes.");
