@@ -1,5 +1,5 @@
 package com.Soham.MSProject.SHA3;
 
-public interface Groestl {
-
+public class Groestl 
+{
 }
