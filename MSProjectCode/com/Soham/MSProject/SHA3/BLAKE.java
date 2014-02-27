@@ -129,21 +129,45 @@ public class BLAKE
     new int[]{ 10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0 }
   };
   
-  public void initialization()
-  {}
+  public byte[] convertHexStringToBytes( String msg )
+  {
+    int length = msg.length();
+    // Number of bytes is even and divisible by 2. Two characters fit to one byte.
+    byte[] message = new byte[ length / 2 ];
+    for( int i = 0; i < length; i += 2 )
+    {
+      message[i / 2] = (byte)((Character.digit(msg.charAt(i), 16) << 4) +
+          Character.digit(msg.charAt(i + 1), 16));
+    }
+    return message;
+  }
   
-  public void round()
-  {}
+  public void padding( byte[] msg, int word_size )
+  {
+    byte[] padding_bytes = new byte[]{ (byte)0x80, (byte)0x00, (byte)0x01, (byte)0x81 };
+    System.out.print(word_size);
+  }
   
-  public void finalization()
-  {}
-    
-  /**
-   * Two variations with word size of 32 and 64.
-   * @param chain_value 
-   * @param salt
-   * @param counter
-   */
-  public void hash( byte[] chain_value, byte[] salt, byte[] counter )
+  public byte[] hash( String msg, int op_size )
+  {
+    // Convert the string message into bytes.
+    byte [] message = convertHexStringToBytes( msg );
+    switch( op_size )
+    {
+    case 224:
+    case 256:
+      padding( message, 32 );
+      break;
+    case 384:
+    case 512:
+      padding( message, 64 );
+      break;
+    default:  // By default the output size would be same as that of the 
+      padding( message, 64 );
+    }
+    return new byte[]{0x00};
+  }
+  
+  public static void main( String[] args )
   {}
 }
