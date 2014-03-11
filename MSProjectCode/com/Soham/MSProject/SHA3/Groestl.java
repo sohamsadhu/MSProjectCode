@@ -16,10 +16,24 @@ public class Groestl
   
   // Omega function will return the last n bits.
   // Omega(x) = truncate(P(x) xor x)
+  // It will also need to know what you want to truncate to, so the bit number.
   
-  // function P
+  // function P the functions in order are 
+  // addRoundConstant, SubBytes, ShiftBytes, MixBytes
   
   // function Q
+  // addRoundConstant, SubBytes, ShiftBytes, MixBytes
+  
+  // Mapping of the bytes to the matrix. From top to bottom column wise.
+  
+  // Adding the round constant, map the constant matrix on the fly and then add.
+  
+  // Substitute with the s box.
+  
+  // Shift bytes for P and Q.
+  
+  // Mixing bytes with the circulant matrix. That is multiply.
+  
   public void something()
   {}
 }
