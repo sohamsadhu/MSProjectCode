@@ -1,5 +1,8 @@
 package com.Soham.MSProject.SHA3;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class BLAKE 
 {
   public static final byte[][] BLAKE_224_IV = new byte[][]{ 
@@ -129,11 +132,12 @@ public class BLAKE
     new int[]{ 10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0 }
   };
   
-  public byte[] convertHexStringToBytes( String msg )
+  // Source: http://stackoverflow.com/questions/13185073/convert-a-string-to-byte-array
+  public Byte[] convertHexStringToBytes( String msg )
   {
     int length = msg.length();
     // Number of bytes is even and divisible by 2. Two characters fit to one byte.
-    byte[] message = new byte[ length / 2 ];
+    Byte[] message = new Byte[ length / 2 ];
     for( int i = 0; i < length; i += 2 )
     {
       message[i / 2] = (byte)((Character.digit(msg.charAt(i), 16) << 4) +
@@ -142,16 +146,28 @@ public class BLAKE
     return message;
   }
   
-  public void padding( byte[] msg, int word_size )
+  public void padHelper( ArrayList<Byte> msg )
+  {
+    msg.add(( byte )0x80);
+  }
+  
+  public void padding( Byte[] msg, int word_size )
   {
     byte[] padding_bytes = new byte[]{ (byte)0x80, (byte)0x00, (byte)0x01, (byte)0x81 };
+    int to_pad = msg.length % 64;
+    ArrayList< Byte > message = new ArrayList< Byte >(Arrays.asList(msg));
+    if( to_pad == 55 ) { // Append the byte 0x81 to end of list.
+      message.add(padding_bytes[3]);
+    } else {
+      padHelper( message );
+    }
     System.out.print(word_size);
   }
   
   public byte[] hash( String msg, int op_size )
   {
     // Convert the string message into bytes.
-    byte [] message = convertHexStringToBytes( msg );
+    Byte [] message = convertHexStringToBytes( msg );
     switch( op_size )
     {
     case 224:
