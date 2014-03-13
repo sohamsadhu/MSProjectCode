@@ -1,5 +1,8 @@
 package com.Soham.MSProject.SHA3;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+
 // Input is a Hex String needs to be converted to bytes.
 // Output is a byte array. Size of the byte array 224, 256, 384, 512.
 // Message is padded and split into blocks of size l, and m blocks.
@@ -47,15 +50,15 @@ public class Groestl
   
   // A utility method that converts my hexadecimal string from the file to an array of Bytes.
   // Source: http://stackoverflow.com/questions/13185073/convert-a-string-to-byte-array
-  public Byte[] convertHexStringToBytes( String msg )
+  public ArrayList<Byte> convertHexStringToBytes( String msg )
   {
     int length = msg.length();
     // Number of bytes is even and divisible by 2. Two characters fit to one byte.
-    Byte[] message = new Byte[ length / 2 ];
+    ArrayList<Byte> message = new ArrayList<>(msg.length() / 2);
     for( int i = 0; i < length; i += 2 )
     {
-      message[i / 2] = (byte)((Character.digit(msg.charAt(i), 16) << 4) +
-          Character.digit(msg.charAt(i + 1), 16));
+      message.add((byte)((Character.digit(msg.charAt(i), 16) << 4) +
+          Character.digit(msg.charAt(i + 1), 16)));
     }
     return message;
   }
@@ -84,7 +87,6 @@ public class Groestl
   
   // Mixing bytes with the circulant matrix. That is multiply.
   
-  // Digest length should be multiple of 8.
   public byte[] getInitialVector( int digest_length )
   {
     if( !((digest_length == 224) || (digest_length == 256) 
@@ -93,66 +95,110 @@ public class Groestl
       System.err.println("The digest length is not of correct size for initial value making.");
       return new byte[]{((byte)0x00)};
     }
-    byte [] iv = new byte[ digest_length / 8 ];
+    byte [] iv = new byte[((digest_length == 224) || (digest_length == 256)) ? 64 : 128];
     int i = 0;
     switch( digest_length )
     {
     case 224:
-      for(i = 0; i < 27; i++) {
+      for(i = 0; i < 63; i++) {
         iv[i] = (byte)0x00;
       }
-      iv[27] = (byte)0xe0;
+      iv[63] = (byte)0xe0;
       return iv;
     case 256:
-      for(i = 0; i < 30; i++) {
-        iv[i] = (byte)0x00;
-      }
-      iv[30] = (byte)0x01;
-      iv[31] = (byte)0x00;
-      return iv;
-    case 384:
-      for(i = 0; i < 46; i++) {
-        iv[i] = (byte)0x00;
-      }
-      iv[46] = (byte)0x01;
-      iv[47] = (byte)0x80;
-      return iv;
-    case 512:
       for(i = 0; i < 62; i++) {
         iv[i] = (byte)0x00;
       }
-      iv[62] = (byte)0x02;
+      iv[62] = (byte)0x01;
       iv[63] = (byte)0x00;
+      return iv;
+    case 384:
+      for(i = 0; i < 126; i++) {
+        iv[i] = (byte)0x00;
+      }
+      iv[126] = (byte)0x01;
+      iv[127] = (byte)0x80;
+      return iv;
+    case 512:
+      for(i = 0; i < 126; i++) {
+        iv[i] = (byte)0x00;
+      }
+      iv[126] = (byte)0x02;
+      iv[127] = (byte)0x00;
       return iv;
     }
     return new byte[]{((byte)0x00)};
   }
   
+  // Function to do the padding.
+  ArrayList<Byte> pad( String msg, int block_length )
+  {
+    ArrayList<Byte> message = convertHexStringToBytes(msg);
+    // Java has negative modulus, so add with the dividing number. Then get out the one
+    // byte pad of 0x80 and you know how many zeros you have to add in bytes by division of 8.
+    int zero_pad_len = ((((-message.size() * 8) - 65) % block_length) + block_length - 7) / 8;
+    message.add((byte)0x80);
+    for( int i = 0; i < zero_pad_len; i++ ) {
+      message.add((byte)0x00);
+    }
+    int num_blocks = (message.size() * 8 + 64) / block_length;
+    BigInteger bi = BigInteger.valueOf( num_blocks );
+    byte[] temp_num_blocks = bi.toByteArray();
+    byte[] byte_num_blocks = new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    for( int i = 0; i < temp_num_blocks.length; i++ ) 
+    {
+      byte_num_blocks[ byte_num_blocks.length - 1 - i ] |= 
+          temp_num_blocks[temp_num_blocks.length - 1 - i ]; 
+    }
+    for( int i = 0; i < byte_num_blocks.length; i++ ) {
+      message.add( byte_num_blocks[i] );
+    }
+    return message;
+  }
+  
   // This function will take in a text message and return a hash value in bytes.
-  public byte[] hash( String msg, int digest_length, int num_of_rounds )
+  public ArrayList<Byte> hash( String msg, int digest_length, int num_of_rounds)
   {
     if( !((digest_length == 224) || (digest_length == 256) 
         || (digest_length == 384) || (digest_length == 512))) 
     {
       System.err.println("The digest length is wrong.");
-      return new byte[]{((byte)0x00)};
+      return null;
     }
+    int block_length = (digest_length == 224) || (digest_length == 256) ? 512 : 1024;
     byte[] iv = getInitialVector( digest_length ); // Fetch initial vector.
-//    StringBuilder sb = new StringBuilder();
-//    for (byte b : iv) {
-//        sb.append(String.format("%02X", b));
-//    }
-//    System.out.println(sb.toString());
-//    System.out.println(iv.length);
-    return new byte[]{((byte)0x00)};
+    if( num_of_rounds == 0 ) {
+      num_of_rounds = digest_length <= 256 ? 10 : 14;
+    }
+    // Pad the message.
+    ArrayList<Byte> message = pad( msg, block_length );
+    return message;
   }
   
   public static void main(String [] args)
   {
     Groestl g = new Groestl();
-    g.hash("", 224, 0);
-    g.hash("", 256, 0);
-    g.hash("", 384, 0);
-    g.hash("", 512, 0);
+//    BigInteger bi = BigInteger.valueOf(300);
+//    byte[] temp = bi.toByteArray();
+//    byte[] temp2 = new byte[]{0x00, 0x00, 0x00, 0x00};
+//    StringBuilder sb = new StringBuilder();
+//    for( int i = 0; i < temp.length; i++ ) {
+//      temp2[ temp2.length - 1 - i ] ^= temp[ temp.length - 1 - i ];
+//    }
+//    for( byte s : temp2) {
+//      sb.append(String.format("%02x", s));
+//    }
+    String s = new String("abc");
+    byte[] str = s.getBytes();
+    StringBuilder sb = new StringBuilder();
+    for( byte some : str ) {
+      sb.append(String.format("%02x", some));
+    }
+    ArrayList<Byte> test = g.hash(sb.toString(), 224, 0);
+    for( Byte some : test ) {
+      sb.append(String.format("%02x", some));
+    }
+    System.out.println(" Size of padded message "+ test.size());
+    System.out.println(sb.toString());
   }
 }
