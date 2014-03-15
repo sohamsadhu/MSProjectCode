@@ -4,14 +4,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-// Input is a Hex String needs to be converted to bytes.
-// Output is a byte array. Size of the byte array 224, 256, 384, 512.
-// Message is padded and split into blocks of size l, and m blocks.
-// hi <- f( h i-1, mi)
-// Two l bits of input to one l bit of output. For 256 bits the message
-// block is 512, and beyond that the internal state is of 1024 bits.
-// Once you have consumed all the message blocks, you will go to the Omega function
-// to do the truncation. Finished the hashing.
 public class Groestl
 {
   public static final byte[] GROESTL_SBOX = new byte[]{ 
@@ -49,7 +41,6 @@ public class Groestl
     (byte)0x41, (byte)0x99, (byte)0x2d, (byte)0x0f, (byte)0xb0, (byte)0x54, (byte)0xbb, (byte)0x16
     };
   
-  // A utility method that converts my hexadecimal string from the file to an array of Bytes.
   // Source: http://stackoverflow.com/questions/13185073/convert-a-string-to-byte-array
   public ArrayList<Byte> convertHexStringToBytes( String msg )
   {
@@ -131,12 +122,9 @@ public class Groestl
     return new byte[]{((byte)0x00)};
   }
   
-  // Function to do the padding.
   ArrayList<Byte> pad( String msg, int block_length )
   {
     ArrayList<Byte> message = convertHexStringToBytes(msg);
-    // Java has negative modulus, so add with the dividing number. Then get out the one
-    // byte pad of 0x80 and you know how many zeros you have to add in bytes by division of 8.
     int zero_pad_len = ((((-message.size() * 8) - 65) % block_length) + block_length - 7) / 8;
     message.add((byte)0x80);
     for( int i = 0; i < zero_pad_len; i++ ) {
@@ -166,29 +154,50 @@ public class Groestl
     for( int i = 0; i < 8; i++ )
     {
       for( int j = 0; j < columns; j++ ) {
-        temp[i][j] = iv[(j * columns) + i];
+        temp[i][j] = iv[(j * 8) + i];
       }
     }
     message_blocks.add(temp);
     int fromIndex = 0;
+    block_length = block_length / 8;
     int toIndex = block_length;
     while(toIndex <= msg.size())
     {
       List <Byte> msg_block = msg.subList(fromIndex, toIndex);
+      temp = new byte[8][columns];
       for( int i = 0; i < 8; i++ )
       {
         for( int j = 0; j < columns; j++ ) {
-          temp[i][j] = msg_block.get((j * columns) + i);
+          temp[i][j] = msg_block.get((j * 8) + i);
         }
       }
       message_blocks.add(temp);
-      toIndex = fromIndex;
-      fromIndex += block_length;
+      fromIndex = toIndex;
+      toIndex += block_length;
     }
     return message_blocks;
   }
   
-  // This function will take in a text message and return a hash value in bytes.
+  public void printState( ArrayList< byte [][]> message_blocks, int block_length )
+  {
+    int columns = block_length <= 512 ? 8 : 16;
+    for( byte[][] block : message_blocks )
+    {
+      System.out.println(" Block");
+      for( int i = 0; i < 8; i++ )
+      {
+        for( int j = 0; j < columns; j++ ) {
+          System.out.printf("%02x ", block[i][j]);
+        }
+        System.out.println(" ");
+      }
+      System.out.println("");
+    }
+  }
+  
+  public void transform( ArrayList< byte[][] > msg_blocks, int block_length, int num_rounds )
+  {}
+  
   public ArrayList<Byte> hash( String msg, int digest_length, int num_of_rounds)
   {
     if( !((digest_length == 224) || (digest_length == 256) 
@@ -202,36 +211,21 @@ public class Groestl
     if( num_of_rounds == 0 ) {
       num_of_rounds = digest_length <= 256 ? 10 : 14;
     }
-    // Pad the message.
     ArrayList<Byte> message = pad( msg, block_length );
     ArrayList< byte[][] > message_blocks = convertMsgTo2DByteArray(iv, message, block_length);
+    transform( message_blocks, block_length, num_of_rounds );
     return message;
   }
   
   public static void main(String [] args)
   {
     Groestl g = new Groestl();
-//    BigInteger bi = BigInteger.valueOf(300);
-//    byte[] temp = bi.toByteArray();
-//    byte[] temp2 = new byte[]{0x00, 0x00, 0x00, 0x00};
-//    StringBuilder sb = new StringBuilder();
-//    for( int i = 0; i < temp.length; i++ ) {
-//      temp2[ temp2.length - 1 - i ] ^= temp[ temp.length - 1 - i ];
-//    }
-//    for( byte s : temp2) {
-//      sb.append(String.format("%02x", s));
-//    }
-    String s = new String("abc");
+    String s = new String("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopqopqrpqrsqrstrstustuvtuvwuvwxvwxywxyzxyzayzabzabcabcdbcdecdefdefg");
     byte[] str = s.getBytes();
     StringBuilder sb = new StringBuilder();
     for( byte some : str ) {
       sb.append(String.format("%02x", some));
     }
-    ArrayList<Byte> test = g.hash(sb.toString(), 224, 0);
-    for( Byte some : test ) {
-      sb.append(String.format("%02x", some));
-    }
-    System.out.println(" Size of padded message "+ test.size());
-    System.out.println(sb.toString());
+    g.hash(sb.toString(), 512, 0);
   }
 }
