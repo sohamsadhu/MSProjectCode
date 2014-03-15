@@ -2,6 +2,7 @@ package com.Soham.MSProject.SHA3;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.List;
 
 // Input is a Hex String needs to be converted to bytes.
 // Output is a byte array. Size of the byte array 224, 256, 384, 512.
@@ -156,6 +157,37 @@ public class Groestl
     return message;
   }
   
+  public ArrayList< byte[][] > convertMsgTo2DByteArray( byte[] iv, ArrayList<Byte> msg, 
+      int block_length )
+  {
+    ArrayList<byte[][]> message_blocks = new ArrayList<>();
+    int columns = block_length == 512 ? 8 : 16;
+    byte[][] temp = new byte[8][columns];
+    for( int i = 0; i < 8; i++ )
+    {
+      for( int j = 0; j < columns; j++ ) {
+        temp[i][j] = iv[(j * columns) + i];
+      }
+    }
+    message_blocks.add(temp);
+    int fromIndex = 0;
+    int toIndex = block_length;
+    while(toIndex <= msg.size())
+    {
+      List <Byte> msg_block = msg.subList(fromIndex, toIndex);
+      for( int i = 0; i < 8; i++ )
+      {
+        for( int j = 0; j < columns; j++ ) {
+          temp[i][j] = msg_block.get((j * columns) + i);
+        }
+      }
+      message_blocks.add(temp);
+      toIndex = fromIndex;
+      fromIndex += block_length;
+    }
+    return message_blocks;
+  }
+  
   // This function will take in a text message and return a hash value in bytes.
   public ArrayList<Byte> hash( String msg, int digest_length, int num_of_rounds)
   {
@@ -172,6 +204,7 @@ public class Groestl
     }
     // Pad the message.
     ArrayList<Byte> message = pad( msg, block_length );
+    ArrayList< byte[][] > message_blocks = convertMsgTo2DByteArray(iv, message, block_length);
     return message;
   }
   
