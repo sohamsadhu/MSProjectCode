@@ -41,11 +41,13 @@ public class Groestl
     (byte)0x41, (byte)0x99, (byte)0x2d, (byte)0x0f, (byte)0xb0, (byte)0x54, (byte)0xbb, (byte)0x16
     };
   
+  public static final int[][] SHIFT_INDEX = new int[][] {{0,1,2,3,4,5,6,7}, {0,1,2,3,4,5,6,11},
+    {1,3,5,7,0,2,4,6}, {1,3,5,11,0,2,4,6}};
+  
   // Source: http://stackoverflow.com/questions/13185073/convert-a-string-to-byte-array
   public ArrayList<Byte> convertHexStringToBytes( String msg )
   {
     int length = msg.length();
-    // Number of bytes is even and divisible by 2. Two characters fit to one byte.
     ArrayList<Byte> message = new ArrayList<>(msg.length() / 2);
     for( int i = 0; i < length; i += 2 )
     {
@@ -54,30 +56,6 @@ public class Groestl
     }
     return message;
   }
-  
-  // The box function, input of two 512 bit blocks or two 1024 blocks.
-  // Sends back a 512 or 1024 block back.
-  // f(h, m) = P(h xor m) xor Q(m) xor h
-  
-  // Omega function will return the last n bits.
-  // Omega(x) = truncate(P(x) xor x)
-  // It will also need to know what you want to truncate to, so the bit number.
-  
-  // function P the functions in order are 
-  // addRoundConstant, SubBytes, ShiftBytes, MixBytes
-  
-  // function Q
-  // addRoundConstant, SubBytes, ShiftBytes, MixBytes
-  
-  // Mapping of the bytes to the matrix. From top to bottom column wise.
-  
-  // Adding the round constant, map the constant matrix on the fly and then add.
-  
-  // Substitute with the s box.
-  
-  // Shift bytes for P and Q.
-  
-  // Mixing bytes with the circulant matrix. That is multiply.
   
   public byte[] getInitialVector( int digest_length )
   {
@@ -195,10 +173,138 @@ public class Groestl
     }
   }
   
-  public void transform( ArrayList< byte[][] > msg_blocks, int block_length, int num_rounds )
-  {}
+  public byte[][] addRoundConstant( byte[][] msg, int columns, int round, char variant )
+  {
+    switch( variant )
+    {
+    case 'P':
+      for( int i = 0; i < 8; i++ ) {
+        msg[0][i] = ( byte )(msg[0][i] ^ (i << 4) ^ round);
+      }
+      break;
+    case 'Q':
+      for( int i = 0; i < 7; i++ )
+      {
+        for( int j = 0; j < columns; j++ ) {
+          msg[0][j] ^= 0xFF;
+        }
+      }
+      for( int i = 0; i < columns; i++ ) {
+        msg[7][i] = ( byte )(msg[7][i] ^ (i << 4) ^ 0xFF ^ round);
+      }
+      break;
+    }
+    return msg;
+  }
   
-  public ArrayList<Byte> hash( String msg, int digest_length, int num_of_rounds)
+  public byte[][] subBytes( byte[][] msg, int columns )
+  {
+    for( int i = 0; i < 8; i++ )
+    {
+      for( int j = 0; j < 8; j++ ) {
+        msg[i][j] = GROESTL_SBOX[ msg[i][j] ];
+      }
+    }
+    return msg;
+  }
+  
+  public byte[][] shiftBytes( byte[][] msg, int columns, char variant )
+  {
+    int[] shift;
+    if( variant == 'P' ) {
+      shift = (columns == 8) ? SHIFT_INDEX[0] : SHIFT_INDEX[1];
+    } else {
+      shift = (columns == 8) ? SHIFT_INDEX[2] : SHIFT_INDEX[3];
+    }
+    byte[] temp = new byte[ columns ];
+    for( int i = 0; i < 8; i++ )
+    {
+      for( int j = 0; j < columns; j++ ) {
+        temp[j] = msg[i][(j + shift[j]) % columns];
+      }
+      for( int j = 0; i < columns; j++ ) {
+        msg[i][j] = temp[j];
+      }
+    }
+    return msg;
+  }
+  
+  public byte[][] mixBytes( byte[][] msg )
+  {
+    return null;
+  }
+  
+  public byte[][] permutationP( byte[][] msg1, byte[][] msg2, int block_length, int num_rounds )
+  {
+    int columns = block_length / 8 / 8;
+    byte[][] msg = new byte[8][ columns ];
+    for( int i = 0; i < 8; i++ )
+    {
+      for( int j = 0; j < columns; j++ ) {
+        msg[i][j] = ( byte )(msg1[i][j] ^ msg2[i][j]);
+      }
+    }
+    for( int i = 0; i < num_rounds; i++ )
+    {
+      msg = addRoundConstant( msg, columns, i, 'P' );
+      msg = subBytes( msg, columns );
+      msg = shiftBytes( msg, columns, 'P' );
+      msg = mixBytes( msg );
+    }
+    return msg;
+  }
+  
+  public byte[][] permutationQ( byte[][] msg2, int block_length, int num_rounds )
+  {
+    return null;
+  }
+  
+  public byte[][] permutationFunction( byte[][] msg1, byte[][] msg2, int block_length,
+      int num_rounds )
+  {
+    byte[][] temp = msg1;
+    msg1 = permutationP( msg1, msg2, block_length, num_rounds );
+    msg2 = permutationQ( msg2, block_length, num_rounds );
+    int columns = block_length / 8 / 8;
+    byte[][] permuted = new byte[8][block_length / 8 / 8];
+    for( int i = 0; i < 8; i++ )
+    {
+      for( int j = 0; j < columns; j++ ) {
+        permuted[i][j] = (byte)( temp[i][j] ^ msg1[i][j] ^ msg2[i][j] );
+      }
+    }
+    return permuted;
+  }
+  
+  public byte[] omega( byte[][] permutedBlock, int block_length, int digest_length,
+      int num_rounds )
+  {
+    byte[][] temp = permutedBlock;
+    permutedBlock = omegaHelper( permutedBlock, block_length, num_rounds );
+    byte[] hash = new byte[digest_length / 8];
+    int i = 0;
+    int j = (block_length / 8) - (digest_length / 8);
+    for( ; j < (block_length / 8); j++, i++ ) {
+      hash[i] = permutedBlock[j % 8][j / 8];
+    }
+    return hash;
+  }
+  
+  public byte[] transform( ArrayList< byte[][] > msg_blocks, int block_length, int num_rounds,
+      int digest_length )
+  {
+    byte[][] msg1 = msg_blocks.get(0);  // First block is the iv.
+    byte[][] msg2 = null;
+    for( int i = 1; i < msg_blocks.size(); i++ )
+    {
+      msg2 = msg_blocks.get(i);
+      msg1 = permutationFunction( msg1, msg2, block_length, num_rounds );
+    }
+    byte[] hash = omega( msg1, block_length, digest_length, num_rounds );
+    return hash;
+  }
+  
+  public byte[] hash( String msg, int digest_length, int num_of_rounds)
   {
     if( !((digest_length == 224) || (digest_length == 256) 
         || (digest_length == 384) || (digest_length == 512))) 
@@ -213,19 +319,19 @@ public class Groestl
     }
     ArrayList<Byte> message = pad( msg, block_length );
     ArrayList< byte[][] > message_blocks = convertMsgTo2DByteArray(iv, message, block_length);
-    transform( message_blocks, block_length, num_of_rounds );
-    return message;
+    byte [] hash = transform( message_blocks, block_length, num_of_rounds, digest_length );
+    return hash;
   }
   
   public static void main(String [] args)
   {
     Groestl g = new Groestl();
-    String s = new String("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopqopqrpqrsqrstrstustuvtuvwuvwxvwxywxyzxyzayzabzabcabcdbcdecdefdefg");
+    String s = new String("abc");
     byte[] str = s.getBytes();
     StringBuilder sb = new StringBuilder();
     for( byte some : str ) {
       sb.append(String.format("%02x", some));
     }
-    g.hash(sb.toString(), 512, 0);
+    g.hash(sb.toString(), 224, 0);
   }
 }
