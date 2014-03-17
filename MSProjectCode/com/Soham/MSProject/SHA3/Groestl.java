@@ -44,6 +44,27 @@ public class Groestl
   public static final int[][] SHIFT_INDEX = new int[][] {{0,1,2,3,4,5,6,7}, {0,1,2,3,4,5,6,11},
     {1,3,5,7,0,2,4,6}, {1,3,5,11,0,2,4,6}};
   
+  public static final byte[][] B = new byte[][]{
+    {(byte)0x02, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x03, (byte)0x05, (byte)0x07},
+    {(byte)0x07, (byte)0x02, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x03, (byte)0x05},
+    {(byte)0x05, (byte)0x07, (byte)0x02, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x03},
+    {(byte)0x03, (byte)0x05, (byte)0x07, (byte)0x02, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05},
+    {(byte)0x05, (byte)0x03, (byte)0x05, (byte)0x07, (byte)0x02, (byte)0x02, (byte)0x03, (byte)0x04},
+    {(byte)0x04, (byte)0x05, (byte)0x03, (byte)0x05, (byte)0x07, (byte)0x02, (byte)0x02, (byte)0x03},
+    {(byte)0x03, (byte)0x04, (byte)0x05, (byte)0x03, (byte)0x05, (byte)0x07, (byte)0x02, (byte)0x02}, 
+    {(byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x03, (byte)0x05, (byte)0x07, (byte)0x02}
+    };
+  
+  // Shift helper functions as from the reference C implementation. Soeren S. Thomsen 
+  // and Krystian Matusiewicz
+  public byte mul1( byte b ) { return b ;}
+  public byte mul2( byte b ) { return ( byte )((0 == (b>>7))?((b)<<1)^0x1b:((b)<<1)); }
+  public byte mul3( byte b ) { return ( byte )(mul2(b) ^ mul1(b)); }
+  public byte mul4( byte b ) { return ( byte )(mul2( mul2( b ))); }
+  public byte mul5( byte b ) { return ( byte )(mul4(b) ^ mul1(b)); }
+  public byte mul6( byte b ) { return ( byte )(mul4(b) ^ mul2(b)); }
+  public byte mul7( byte b ) { return ( byte )(mul4(b) ^ mul2(b) ^ mul1(b)); }
+  
   // Source: http://stackoverflow.com/questions/13185073/convert-a-string-to-byte-array
   public ArrayList<Byte> convertHexStringToBytes( String msg )
   {
@@ -156,18 +177,12 @@ public class Groestl
     return message_blocks;
   }
   
-  public void printState( ArrayList< byte [][]> message_blocks, int block_length )
+  public void printState( byte [][] message_blocks )
   {
-    int columns = block_length <= 512 ? 8 : 16;
-    for( byte[][] block : message_blocks )
+    for( byte[] row : message_blocks )
     {
-      System.out.println(" Block");
-      for( int i = 0; i < 8; i++ )
-      {
-        for( int j = 0; j < columns; j++ ) {
-          System.out.printf("%02x ", block[i][j]);
-        }
-        System.out.println(" ");
+      for( byte b : row ) {
+        System.out.printf("%02x ", b);
       }
       System.out.println("");
     }
@@ -202,7 +217,7 @@ public class Groestl
     for( int i = 0; i < 8; i++ )
     {
       for( int j = 0; j < 8; j++ ) {
-        msg[i][j] = GROESTL_SBOX[ msg[i][j] ];
+        msg[i][j] = GROESTL_SBOX[ msg[i][j] & 0xff ];
       }
     }
     return msg;
@@ -220,18 +235,53 @@ public class Groestl
     for( int i = 0; i < 8; i++ )
     {
       for( int j = 0; j < columns; j++ ) {
-        temp[j] = msg[i][(j + shift[j]) % columns];
+        temp[j] = msg[i][(j + shift[i]) % columns];
       }
-      for( int j = 0; i < columns; j++ ) {
+      for( int j = 0; j < columns; j++ ) {
         msg[i][j] = temp[j];
       }
     }
     return msg;
   }
   
-  public byte[][] mixBytes( byte[][] msg )
+//  public byte[][] mixBytes( byte[][] msg, int columns )
+//  {
+//    byte[][] mixed_msg = new byte[8][columns];
+//    for( int i = 0; i < 8; i++ )
+//    {
+//      for( int j = 0; j < columns; j++ ) {
+//        mixed_msg[i][j] = 0x00;
+//      }
+//    }
+//    for( int i = 0; i < 8; i++ )
+//    {
+//      for( int j = 0; j < columns; j++ )
+//      {
+//        for( int k = 0; k < 8; k++ ) {
+//          mixed_msg[i][j] = ( byte )(mixed_msg[i][j] ^ (B[i][k] & msg[k][j]));
+//        }
+//      }
+//    }
+//    return mixed_msg;
+//  }
+  
+  public byte[][] mixBytes( byte[][] msg, int columns )
   {
-    return null;
+    byte temp[] = new byte[8];
+    for( int i = 0; i < columns; i++ ) 
+    {
+      for (int j = 0; j < 8; j++) 
+      {
+        temp[j] = ( byte )(mul2(msg[(j + 0) % 8][i]) ^ mul2(msg[(j + 1) % 8][i]) ^ 
+            mul3(msg[(j + 2) % 8][i]) ^ mul4(msg[(j + 3) % 8][i]) ^ 
+            mul5(msg[(j + 4) % 8][i]) ^ mul3(msg[(j + 5) % 8][i]) ^
+            mul5(msg[(j + 6) % 8][i]) ^ mul7(msg[(j + 7) % 8][i]));
+      }
+      for( int j = 0; j < 8; j++ ) {
+        msg[j][i] = temp[j];
+      }
+    }
+    return msg;
   }
   
   public byte[][] permutationP( byte[][] msg1, byte[][] msg2, int block_length, int num_rounds )
@@ -244,19 +294,39 @@ public class Groestl
         msg[i][j] = ( byte )(msg1[i][j] ^ msg2[i][j]);
       }
     }
+    // Print the state of input to P
+    System.out.println("input to P");
+    printState(msg);
     for( int i = 0; i < num_rounds; i++ )
     {
+      System.out.println(" for P round "+ i);
       msg = addRoundConstant( msg, columns, i, 'P' );
+      System.out.println(" after round constant ");
+      printState(msg);
       msg = subBytes( msg, columns );
+      System.out.println(" after sub bytes ");
+      printState(msg);
       msg = shiftBytes( msg, columns, 'P' );
-      msg = mixBytes( msg );
+      System.out.println(" after shift bytes ");
+      printState(msg);
+      msg = mixBytes( msg, columns );
+      System.out.println(" after mix bytes ");
+      printState(msg);
     }
     return msg;
   }
   
   public byte[][] permutationQ( byte[][] msg2, int block_length, int num_rounds )
   {
-    return null;
+    int columns = block_length / 8 / 8;
+    for( int i = 0; i < num_rounds; i++ )
+    {
+      msg2 = addRoundConstant( msg2, columns, i, 'Q' );
+      msg2 = subBytes( msg2, columns );
+      msg2 = shiftBytes( msg2, columns, 'Q' );
+      msg2 = mixBytes( msg2, columns );
+    }
+    return msg2;
   }
   
   public byte[][] permutationFunction( byte[][] msg1, byte[][] msg2, int block_length,
@@ -279,8 +349,30 @@ public class Groestl
   public byte[] omega( byte[][] permutedBlock, int block_length, int digest_length,
       int num_rounds )
   {
-    byte[][] temp = permutedBlock;
-    permutedBlock = omegaHelper( permutedBlock, block_length, num_rounds );
+    int columns = block_length / 8 / 8;
+    byte[][] temp = new byte[8][ columns ];
+    for( int i = 0; i < 8; i++ )
+    {
+      for( int j = 0; j < columns; j++ ) {
+        temp[i][j] = ( byte )0x00;
+      }
+    }
+    byte[][] temp2 = new byte[8][ columns ];
+    for( int i = 0; i < 8; i++ )
+    {
+      for( int j = 0; j < columns; j++ ) {
+        temp2[i][j] = permutedBlock[i][j];
+      }
+    }
+    permutedBlock = permutationP( permutedBlock, temp, block_length, num_rounds );
+    System.out.println("after the permutation P(h) + h");
+    for( int i = 0; i < 8; i++ )
+    {
+      for( int j = 0; j < columns; j++ ) {
+        permutedBlock[i][j] = ( byte )(permutedBlock[i][j] ^ temp2[i][j]);
+      }
+    }
+    printState(permutedBlock);
     byte[] hash = new byte[digest_length / 8];
     int i = 0;
     int j = (block_length / 8) - (digest_length / 8);
@@ -319,6 +411,13 @@ public class Groestl
     }
     ArrayList<Byte> message = pad( msg, block_length );
     ArrayList< byte[][] > message_blocks = convertMsgTo2DByteArray(iv, message, block_length);
+    // print the initial and message states.
+    System.out.println("initial message blocks");
+    for( byte[][] b : message_blocks ) 
+    {
+      printState( b );
+      System.out.println("");
+    }
     byte [] hash = transform( message_blocks, block_length, num_of_rounds, digest_length );
     return hash;
   }
@@ -332,6 +431,10 @@ public class Groestl
     for( byte some : str ) {
       sb.append(String.format("%02x", some));
     }
-    g.hash(sb.toString(), 224, 0);
+    str = g.hash(sb.toString(), 224, 0);
+    for( byte some : str ) {
+      sb.append(String.format("%02x", some));
+    }
+    System.out.println("hash is "+ str);
   }
 }
