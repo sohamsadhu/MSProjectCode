@@ -58,7 +58,7 @@ public class Groestl
   // Shift helper functions as from the reference C implementation. Soeren S. Thomsen 
   // and Krystian Matusiewicz
   public byte mul1( byte b ) { return b ;}
-  public byte mul2( byte b ) { return ( byte )((0 == (b>>7))?((b)<<1)^0x1b:((b)<<1)); }
+  public byte mul2( byte b ) { return ( byte )(((b>>>7) != 0)?((b)<<1)^0x1b:((b)<<1)); }
   public byte mul3( byte b ) { return ( byte )(mul2(b) ^ mul1(b)); }
   public byte mul4( byte b ) { return ( byte )(mul2( mul2( b ))); }
   public byte mul5( byte b ) { return ( byte )(mul4(b) ^ mul1(b)); }
@@ -201,7 +201,7 @@ public class Groestl
       for( int i = 0; i < 7; i++ )
       {
         for( int j = 0; j < columns; j++ ) {
-          msg[0][j] ^= 0xFF;
+          msg[i][j] ^= 0xFF;
         }
       }
       for( int i = 0; i < columns; i++ ) {
@@ -244,27 +244,6 @@ public class Groestl
     return msg;
   }
   
-//  public byte[][] mixBytes( byte[][] msg, int columns )
-//  {
-//    byte[][] mixed_msg = new byte[8][columns];
-//    for( int i = 0; i < 8; i++ )
-//    {
-//      for( int j = 0; j < columns; j++ ) {
-//        mixed_msg[i][j] = 0x00;
-//      }
-//    }
-//    for( int i = 0; i < 8; i++ )
-//    {
-//      for( int j = 0; j < columns; j++ )
-//      {
-//        for( int k = 0; k < 8; k++ ) {
-//          mixed_msg[i][j] = ( byte )(mixed_msg[i][j] ^ (B[i][k] & msg[k][j]));
-//        }
-//      }
-//    }
-//    return mixed_msg;
-//  }
-  
   public byte[][] mixBytes( byte[][] msg, int columns )
   {
     byte temp[] = new byte[8];
@@ -294,7 +273,6 @@ public class Groestl
         msg[i][j] = ( byte )(msg1[i][j] ^ msg2[i][j]);
       }
     }
-    // Print the state of input to P
     System.out.println("input to P");
     printState(msg);
     for( int i = 0; i < num_rounds; i++ )
@@ -318,13 +296,24 @@ public class Groestl
   
   public byte[][] permutationQ( byte[][] msg2, int block_length, int num_rounds )
   {
+    System.out.println("input to Q");
+    printState(msg2);
     int columns = block_length / 8 / 8;
     for( int i = 0; i < num_rounds; i++ )
     {
+      System.out.println(" for Q round "+ i);
       msg2 = addRoundConstant( msg2, columns, i, 'Q' );
+      System.out.println(" after round constant ");
+      printState(msg2);
       msg2 = subBytes( msg2, columns );
+      System.out.println(" after sub bytes ");
+      printState(msg2);
       msg2 = shiftBytes( msg2, columns, 'Q' );
+      System.out.println(" after shift bytes ");
+      printState(msg2);
       msg2 = mixBytes( msg2, columns );
+      System.out.println(" after mix bytes ");
+      printState(msg2);
     }
     return msg2;
   }
@@ -343,6 +332,10 @@ public class Groestl
         permuted[i][j] = (byte)( temp[i][j] ^ msg1[i][j] ^ msg2[i][j] );
       }
     }
+    System.out.println("");
+    System.out.println("P(h+m) + Q(m) + h =");
+    printState(permuted);
+    System.out.println("");
     return permuted;
   }
   
@@ -433,8 +426,7 @@ public class Groestl
     }
     str = g.hash(sb.toString(), 224, 0);
     for( byte some : str ) {
-      sb.append(String.format("%02x", some));
+      System.out.printf(" %02X", some);
     }
-    System.out.println("hash is "+ str);
   }
 }
