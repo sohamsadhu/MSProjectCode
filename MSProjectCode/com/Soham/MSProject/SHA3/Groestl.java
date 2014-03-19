@@ -55,8 +55,8 @@ public class Groestl
     {(byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x03, (byte)0x05, (byte)0x07, (byte)0x02}
     };
   
-  // Shift helper functions as from the reference C implementation. Soeren S. Thomsen 
-  // and Krystian Matusiewicz
+  // Credits: Shift helper functions as from the reference C implementation.
+  // Soeren S. Thomsen and Krystian Matusiewicz
   public byte mul1( byte b ) { return b ;}
   public byte mul2( byte b ) { return ( byte )(((b>>>7) != 0)?((b)<<1)^0x1b:((b)<<1)); }
   public byte mul3( byte b ) { return ( byte )(mul2(b) ^ mul1(b)); }
@@ -66,6 +66,12 @@ public class Groestl
   public byte mul7( byte b ) { return ( byte )(mul4(b) ^ mul2(b) ^ mul1(b)); }
   
   // Source: http://stackoverflow.com/questions/13185073/convert-a-string-to-byte-array
+  /**
+   * This method converts the string that is in hex format, to its equivalent byte format.
+   * For example the string AB is converted to byte format 1010 1011.
+   * @param msg in hex format representation of bytes
+   * @return array list of bytes
+   */
   public ArrayList<Byte> convertHexStringToBytes( String msg )
   {
     int length = msg.length();
@@ -78,6 +84,11 @@ public class Groestl
     return message;
   }
   
+  /**
+   * Return the initial vector as per the message block length.
+   * @param digest_length in bits
+   * @return a byte array of initial vector for start of hashing.
+   */
   public byte[] getInitialVector( int digest_length )
   {
     if( !((digest_length == 224) || (digest_length == 256) 
@@ -121,6 +132,12 @@ public class Groestl
     return new byte[]{((byte)0x00)};
   }
   
+  /**
+   * Pad the message, in hex format of the bytes.
+   * @param msg 
+   * @param block_length of the block in bits.
+   * @return array list of message padded as per the specification and block length.
+   */
   ArrayList<Byte> pad( String msg, int block_length )
   {
     ArrayList<Byte> message = convertHexStringToBytes(msg);
@@ -144,6 +161,13 @@ public class Groestl
     return message;
   }
   
+  /**
+   * Map the padded message from list of bytes to 2D array of bytes that are input blocks.
+   * @param iv
+   * @param msg
+   * @param block_length
+   * @return array list of 2D byte array that are blocks of input to permutation.
+   */
   public ArrayList< byte[][] > convertMsgTo2DByteArray( byte[] iv, ArrayList<Byte> msg, 
       int block_length )
   {
@@ -177,6 +201,10 @@ public class Groestl
     return message_blocks;
   }
   
+  /**
+   * Helper function to print the block state that is in 2D byte array format.
+   * @param message_blocks
+   */
   public void printState( byte [][] message_blocks )
   {
     for( byte[] row : message_blocks )
@@ -188,12 +216,20 @@ public class Groestl
     }
   }
   
+  /**
+   * Add round constant matrix to state.
+   * @param msg      2D byte array state
+   * @param columns  the number of columns, there are 2 variants only 8 or 16.
+   * @param round
+   * @param variant  either 'P' or 'Q'.
+   * @return
+   */
   public byte[][] addRoundConstant( byte[][] msg, int columns, int round, char variant )
   {
     switch( variant )
     {
     case 'P':
-      for( int i = 0; i < 8; i++ ) {
+      for( int i = 0; i < columns; i++ ) {
         msg[0][i] = ( byte )(msg[0][i] ^ (i << 4) ^ round);
       }
       break;
@@ -212,17 +248,31 @@ public class Groestl
     return msg;
   }
   
+  /**
+   * Substitute the bytes from the Groestl S-Box as the value of the byte used as index in that box.
+   * @param msg
+   * @param columns
+   * @return
+   */
   public byte[][] subBytes( byte[][] msg, int columns )
   {
     for( int i = 0; i < 8; i++ )
     {
-      for( int j = 0; j < 8; j++ ) {
+      for( int j = 0; j < columns; j++ ) {
         msg[i][j] = GROESTL_SBOX[ msg[i][j] & 0xff ];
       }
     }
     return msg;
   }
   
+  /**
+   * Shift the bytes as per the row number in the SHIFT_INDEX array. The first two array list
+   * are for P combination, and rest two are for the Q combination.
+   * @param msg
+   * @param columns
+   * @param variant
+   * @return
+   */
   public byte[][] shiftBytes( byte[][] msg, int columns, char variant )
   {
     int[] shift;
@@ -244,6 +294,13 @@ public class Groestl
     return msg;
   }
   
+  /**
+   * Mix bytes as per the multiplication circulant matrix in GF(2 ^ 8). Credits, taken from 
+   * reference C implementation by Soeren S. Thomsen and Krystian Matusiewicz.
+   * @param msg
+   * @param columns
+   * @return
+   */
   public byte[][] mixBytes( byte[][] msg, int columns )
   {
     byte temp[] = new byte[8];
@@ -263,6 +320,14 @@ public class Groestl
     return msg;
   }
   
+  /**
+   * Just P permutation in the function.
+   * @param msg1 hi - 1
+   * @param msg2 mi
+   * @param block_length
+   * @param num_rounds
+   * @return
+   */
   public byte[][] permutationP( byte[][] msg1, byte[][] msg2, int block_length, int num_rounds )
   {
     int columns = block_length / 8 / 8;
@@ -273,51 +338,66 @@ public class Groestl
         msg[i][j] = ( byte )(msg1[i][j] ^ msg2[i][j]);
       }
     }
-    System.out.println("input to P");
-    printState(msg);
+//    System.out.println("input to P");
+//    printState(msg);
     for( int i = 0; i < num_rounds; i++ )
     {
-      System.out.println(" for P round "+ i);
+//      System.out.println(" for P round "+ i);
       msg = addRoundConstant( msg, columns, i, 'P' );
-      System.out.println(" after round constant ");
-      printState(msg);
+//      System.out.println(" after round constant ");
+//      printState(msg);
       msg = subBytes( msg, columns );
-      System.out.println(" after sub bytes ");
-      printState(msg);
+//      System.out.println(" after sub bytes ");
+//      printState(msg);
       msg = shiftBytes( msg, columns, 'P' );
-      System.out.println(" after shift bytes ");
-      printState(msg);
+//      System.out.println(" after shift bytes ");
+//      printState(msg);
       msg = mixBytes( msg, columns );
-      System.out.println(" after mix bytes ");
-      printState(msg);
+//      System.out.println(" after mix bytes ");
+//      printState(msg);
     }
     return msg;
   }
   
+  /**
+   * Just Q permutation.
+   * @param msg2
+   * @param block_length
+   * @param num_rounds
+   * @return
+   */
   public byte[][] permutationQ( byte[][] msg2, int block_length, int num_rounds )
   {
-    System.out.println("input to Q");
-    printState(msg2);
+//    System.out.println("input to Q");
+//    printState(msg2);
     int columns = block_length / 8 / 8;
     for( int i = 0; i < num_rounds; i++ )
     {
-      System.out.println(" for Q round "+ i);
+//      System.out.println(" for Q round "+ i);
       msg2 = addRoundConstant( msg2, columns, i, 'Q' );
-      System.out.println(" after round constant ");
-      printState(msg2);
+//      System.out.println(" after round constant ");
+//      printState(msg2);
       msg2 = subBytes( msg2, columns );
-      System.out.println(" after sub bytes ");
-      printState(msg2);
+//      System.out.println(" after sub bytes ");
+//      printState(msg2);
       msg2 = shiftBytes( msg2, columns, 'Q' );
-      System.out.println(" after shift bytes ");
-      printState(msg2);
+//      System.out.println(" after shift bytes ");
+//      printState(msg2);
       msg2 = mixBytes( msg2, columns );
-      System.out.println(" after mix bytes ");
-      printState(msg2);
+//      System.out.println(" after mix bytes ");
+//      printState(msg2);
     }
     return msg2;
   }
   
+  /**
+   * The actual permuation or function box in the Merkle Damgard construction of this hash.
+   * @param msg1
+   * @param msg2
+   * @param block_length
+   * @param num_rounds
+   * @return
+   */
   public byte[][] permutationFunction( byte[][] msg1, byte[][] msg2, int block_length,
       int num_rounds )
   {
@@ -332,13 +412,21 @@ public class Groestl
         permuted[i][j] = (byte)( temp[i][j] ^ msg1[i][j] ^ msg2[i][j] );
       }
     }
-    System.out.println("");
-    System.out.println("P(h+m) + Q(m) + h =");
-    printState(permuted);
-    System.out.println("");
+//    System.out.println("");
+//    System.out.println("P(h+m) + Q(m) + h =");
+//    printState(permuted);
+//    System.out.println("");
     return permuted;
   }
   
+  /**
+   * The last omega function that truncates the last bits to give the hash as per digest length.
+   * @param permutedBlock
+   * @param block_length
+   * @param digest_length
+   * @param num_rounds
+   * @return
+   */
   public byte[] omega( byte[][] permutedBlock, int block_length, int digest_length,
       int num_rounds )
   {
@@ -358,14 +446,14 @@ public class Groestl
       }
     }
     permutedBlock = permutationP( permutedBlock, temp, block_length, num_rounds );
-    System.out.println("after the permutation P(h) + h");
+//    System.out.println("after the permutation P(h) + h");
     for( int i = 0; i < 8; i++ )
     {
       for( int j = 0; j < columns; j++ ) {
         permutedBlock[i][j] = ( byte )(permutedBlock[i][j] ^ temp2[i][j]);
       }
     }
-    printState(permutedBlock);
+//    printState(permutedBlock);
     byte[] hash = new byte[digest_length / 8];
     int i = 0;
     int j = (block_length / 8) - (digest_length / 8);
@@ -375,6 +463,14 @@ public class Groestl
     return hash;
   }
   
+  /**
+   * Put the message blocks through the permutation, and get the truncated hash through omega.
+   * @param msg_blocks including the initial vector as the first entry.
+   * @param block_length
+   * @param num_rounds
+   * @param digest_length
+   * @return
+   */
   public byte[] transform( ArrayList< byte[][] > msg_blocks, int block_length, int num_rounds,
       int digest_length )
   {
@@ -389,6 +485,13 @@ public class Groestl
     return hash;
   }
   
+  /**
+   * Function, that starts: gets initial vector, pads and then sends it for transformation.
+   * @param msg
+   * @param digest_length
+   * @param num_of_rounds
+   * @return
+   */
   public byte[] hash( String msg, int digest_length, int num_of_rounds)
   {
     if( !((digest_length == 224) || (digest_length == 256) 
@@ -404,13 +507,12 @@ public class Groestl
     }
     ArrayList<Byte> message = pad( msg, block_length );
     ArrayList< byte[][] > message_blocks = convertMsgTo2DByteArray(iv, message, block_length);
-    // print the initial and message states.
-    System.out.println("initial message blocks");
-    for( byte[][] b : message_blocks ) 
-    {
-      printState( b );
-      System.out.println("");
-    }
+//    System.out.println("initial message blocks");
+//    for( byte[][] b : message_blocks ) 
+//    {
+//      printState( b );
+//      System.out.println("");
+//    }
     byte [] hash = transform( message_blocks, block_length, num_of_rounds, digest_length );
     return hash;
   }
