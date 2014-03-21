@@ -1,7 +1,7 @@
 package com.Soham.MSProject.SHA3;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class BLAKE 
 {
@@ -133,15 +133,20 @@ public class BLAKE
   };
   
   // Source: http://stackoverflow.com/questions/13185073/convert-a-string-to-byte-array
-  public Byte[] convertHexStringToBytes( String msg )
+  /**
+   * This method converts the string that is in hex format, to its equivalent byte format.
+   * For example the string AB is converted to byte format 1010 1011.
+   * @param msg in hex format representation of bytes
+   * @return array list of bytes
+   */
+  public ArrayList<Byte> convertHexStringToBytes( String msg )
   {
     int length = msg.length();
-    // Number of bytes is even and divisible by 2. Two characters fit to one byte.
-    Byte[] message = new Byte[ length / 2 ];
+    ArrayList<Byte> message = new ArrayList<>(msg.length() / 2);
     for( int i = 0; i < length; i += 2 )
     {
-      message[i / 2] = (byte)((Character.digit(msg.charAt(i), 16) << 4) +
-          Character.digit(msg.charAt(i + 1), 16));
+      message.add((byte)((Character.digit(msg.charAt(i), 16) << 4) +
+          Character.digit(msg.charAt(i + 1), 16)));
     }
     return message;
   }
@@ -151,28 +156,62 @@ public class BLAKE
     msg.add(( byte )0x80);
   }
   
-  public void padding( Byte[] msg, int word_size )
+  public ArrayList<Byte> padding( ArrayList<Byte> msg, int word_size )
   {
     byte[] padding_bytes = new byte[]{ (byte)0x80, (byte)0x00, (byte)0x01, (byte)0x81 };
-    int to_pad = msg.length % 64;
-    ArrayList< Byte > message = new ArrayList< Byte >(Arrays.asList(msg));
-    if( to_pad == 55 ) { // Append the byte 0x81 to end of list.
-      message.add(padding_bytes[3]);
-    } else {
-      padHelper( message );
+    int bytes_append = msg.size()  % 64;
+    if( bytes_append < 56 )
+    {
+      if( bytes_append <= 54 )
+      {
+        msg.add( padding_bytes[0] );
+        int zero_bytes = 56 - (bytes_append + 2);
+        for( int i = 0; i < zero_bytes; i++ ) {
+          msg.add( padding_bytes[1] );
+        }
+        msg.add( padding_bytes[2] );
+      }
+      else { // bytes_append == 55
+        msg.add( padding_bytes[3] );
+      }
     }
-    System.out.print(word_size);
+    else
+    {
+      msg.add( padding_bytes[0] );
+      bytes_append = (msg.size() % 64) + 55;
+      for( int i = 0; i < bytes_append; i++ ) {
+        msg.add( padding_bytes[1] );
+      }
+      msg.add( padding_bytes[2] );
+    }
+    int length = msg.size() * 8; // For message of size l bits
+    BigInteger bi = BigInteger.valueOf( length );
+    byte[] temp_num_bitlength = bi.toByteArray();
+    byte[] byte_num_bitlength = new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    for( int i = 0; i < temp_num_bitlength.length; i++ ) 
+    {
+      byte_num_bitlength[ byte_num_bitlength.length - 1 - i ] |= 
+          temp_num_bitlength[temp_num_bitlength.length - 1 - i ]; 
+    }
+    for( byte b : byte_num_bitlength ) {
+      msg.add(b);
+    }
+    return msg;
   }
   
   public byte[] hash( String msg, int op_size )
   {
     // Convert the string message into bytes.
-    Byte [] message = convertHexStringToBytes( msg );
+    ArrayList<Byte> message = convertHexStringToBytes( msg );
     switch( op_size )
     {
     case 224:
     case 256:
-      padding( message, 32 );
+      message = padding( message, 32 );
+      if( 0 == ((message.size() * 8) % 512)) {
+        System.err.println("Error in padding.");
+      }
+      // The word size here is 32 bits.
       break;
     case 384:
     case 512:
