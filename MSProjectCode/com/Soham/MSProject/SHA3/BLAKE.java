@@ -201,12 +201,13 @@ public class BLAKE
   
   public byte[] hash( String msg, int op_size )
   {
-    // Convert the string message into bytes.
     ArrayList<Byte> message = convertHexStringToBytes( msg );
     switch( op_size )
     {
     case 224:
     case 256:
+      BLAKE256 blake256 = new BLAKE256();
+      blake256.hash( message );
       message = padding( message, 32 );
       if( 0 == ((message.size() * 8) % 512)) {
         System.err.println("Error in padding.");
