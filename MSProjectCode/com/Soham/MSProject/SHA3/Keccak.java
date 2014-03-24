@@ -1,33 +1,19 @@
 package com.Soham.MSProject.SHA3;
 
+import java.nio.ByteBuffer;
+
 public class Keccak 
-{
-  public static final byte[][] RC = {
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80, (byte)0x82},
-    {(byte)0x80, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80, (byte)0x8A},
-    {(byte)0x80, 0x00, 0x00, 0x00, (byte)0x80, 0x00, (byte)0x80, 0x00},
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80, (byte)0x8B},
-    {0x00, 0x00, 0x00, 0x00, (byte)0x80, 0x00, 0x00, 0x01},
-    {(byte)0x80, 0x00, 0x00, 0x00, (byte)0x80, 0x00, (byte)0x80, (byte)0x81},
-    {(byte)0x80, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80, 0x09},
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x8A},
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x88},
-    {0x00, 0x00, 0x00, 0x00, (byte)0x80, 0x00, (byte)0x80, 0x09},
-    {0x00, 0x00, 0x00, 0x00, (byte)0x80, 0x00, 0x00, 0x0A},
-    {0x00, 0x00, 0x00, 0x00, (byte)0x80, 0x00, (byte)0x80, (byte)0x8B},
-    {(byte)0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x8B},
-    {(byte)0x80, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80, (byte)0x89},
-    {(byte)0x80, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80, 0x03},
-    {(byte)0x80, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80, 0x02},
-    {(byte)0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80},
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80, 0x0A},
-    {(byte)0x80, 0x00, 0x00, 0x00, (byte)0x80, 0x00, 0x00, 0x0A},
-    {(byte)0x80, 0x00, 0x00, 0x00, (byte)0x80, 0x00, (byte)0x80, (byte)0x81},
-    {(byte)0x80, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80, (byte)0x80},
-    {0x00, 0x00, 0x00, 0x00, (byte)0x80, 0x00, 0x00, 0x01},
-    {(byte)0x80, 0x00, 0x00, 0x00, (byte)0x80, 0x00, (byte)0x80, 0x08},
-  };
+{  
+  public static final long[] RC = { 0x0000000000000001, 0x0000000000008082,
+    0x800000000000808AL, 0x8000000080008000L, 0x000000000000808BL, 0x0000000080000001L,
+    0x8000000080008081L, 0x8000000000008009L, 0x000000000000008AL, 0x0000000000000088L,
+    0x0000000080008009, 0x000000008000000AL, 0x000000008000808BL, 0x800000000000008BL,
+    0x8000000000008089L, 0x8000000000008003L, 0x8000000000008002L, 0x8000000000000080L,
+    0x000000000000800AL, 0x800000008000000AL, 0x8000000080008081L, 0x8000000000008080L,
+    0x0000000080000001, 0x8000000080008008L };
+  
+  public static final int[][] ROTATION = {{0, 36, 3, 41, 18}, {1, 44, 10, 45, 2},
+    {62, 6, 43, 15, 61}, {28, 55, 25, 21, 56}, {27, 20, 39, 8, 14}};
   
   //Source: http://stackoverflow.com/questions/13185073/convert-a-string-to-byte-array
   public byte[] convertHexStringToBytes( String msg )
@@ -84,7 +70,7 @@ public class Keccak
     return message_blocks;
   }
   
-  public byte[][][] xorStatePermutation( byte[][][] state, byte[] msg_block )
+  public long[][] xorStatePermutation( long[][] state, byte[] msg_block )
   {
     byte[] temp_block = new byte[ 200 ]; // State size is fixed at 1600 bits.
     // Pad the message with the zeros, so that it can be easily XORed with the state.
@@ -94,39 +80,63 @@ public class Keccak
     for( int i = msg_block.length; i < 200; i++ ) {
       temp_block[i] = 0x00;
     }
+    ByteBuffer wrapped;
     for( int i = 0; i < 5; i++ )
     {
       for( int j = 0; j < 5; j++ )
       {
+        byte[] temp = new byte[8];
         for( int k = 0; k < 8; k++ ) 
         {
           int row_offset = 5 * 8 * i;
           int column_offset = (j + 1) * 8;
-          state[i][j][k] = ( byte )(state[i][j][k] ^ msg_block[row_offset + column_offset - 1 - k]);
+          temp[k] =  msg_block[row_offset + column_offset - 1 - k];
         }
+        wrapped = ByteBuffer.wrap( temp );
+        long temp_long = wrapped.getLong();
+        state[i][j] = state[i][j] ^ temp_long;
       }
     }
     return state;
   }
   
-  public byte[][][] permute( byte[][][] state )
+  // Source: Keccak Python implementation by Renaud Bauvin
+  public long rotation( long lane, int rotate )
   {
-    
+    rotate = rotate % 64;
+    lane = ((lane >>> (64 - rotate)) + (lane << rotate)) % (1 << 64);
+    return lane;
+  }
+  
+  public long[][] theta( long[][] state )
+  {
+    long [][] B = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 
+        {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+    long [] C = { 0, 0, 0, 0, 0 };
+    long [] D = { 0, 0, 0, 0, 0 };
+    for( int i = 0; i < 5; i++ ) {
+    }
+    return state;
+  }
+  
+  public long[][] permute( long[][] state )
+  {
+    for( int i = 0; i < 24; i++ )
+    {
+      
+      
+      //Theta
+      //Rho and Pi
+      //Chi
+      //RC
+    }
     return null;
   }
   
   public byte[] transform( byte[] message, int bit_rate )
   {
-    byte[][][] state = new byte[5][5][8];
-    for( int i = 0; i < 5; i++ )
-    {
-      for( int j = 0; j < 5; j++ )
-      {
-        for( int k = 0; k < 8; k++ ) {
-          state[i][j][k] = 0x00;
-        }
-      }
-    }
+    long[][] state = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 
+        {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
     byte[][] msg_blocks = getMsgBlocks( message, bit_rate );
     for( byte[] block : msg_blocks )
     {
