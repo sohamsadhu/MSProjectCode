@@ -110,23 +110,49 @@ public class Keccak
   
   public long[][] theta( long[][] state )
   {
-    long [][] B = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 
-        {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
-    long [] C = { 0, 0, 0, 0, 0 };
-    long [] D = { 0, 0, 0, 0, 0 };
+    long [] c = { 0, 0, 0, 0, 0 };
+    long [] d = { 0, 0, 0, 0, 0 };
     for( int i = 0; i < 5; i++ ) {
+      c[i] = state[i][0] ^ state[i][1] ^ state[i][2] ^ state[i][3] ^ state[i][4];
+    }
+    d[0] = c[4] ^ rotation(c[1], 1);
+    for( int i = 1; i < 5; i++ ) {
+      d[i] = c[i - 1] ^ rotation(c[(i + 1) % 5], 1);
+    }
+    for( int i = 0; i < 5; i++ )
+    {
+      for( int j = 0; j < 5; j++ ) {
+        state[i][j] = state[i][j] ^ d[i];
+      }
     }
     return state;
+  }
+  
+  public long[][] rhoPi( long[][] state )
+  {
+    long[][] b = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 
+        {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+    for( int i = 0; i < 5; i++ )
+    {
+      for( int j = 0; j < 5; j++ ) {
+        b[j][((2 * i) + (3 * j)) % 5] = rotation(state[i][j], ROTATION[i][j]);
+      }
+    }
+    return b;
+  }
+  
+  public long[][] chi( long[][] state )
+  {
+    return null;
   }
   
   public long[][] permute( long[][] state )
   {
     for( int i = 0; i < 24; i++ )
     {
-      
-      
-      //Theta
-      //Rho and Pi
+      state = theta( state );
+      state = rhoPi( state );
+      state = chi( state );
       //Chi
       //RC
     }
