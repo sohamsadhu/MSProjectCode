@@ -28,11 +28,28 @@ public class Keccak
     return message;
   }
   
+  public void printState( long[][] state )
+  {
+    for( long[] row : state )
+    {
+      for( long cell : row )
+      {
+        ByteBuffer buf = ByteBuffer.allocate(8);
+        buf.putLong( cell );
+        byte[] statebyte = buf.array();
+        for( byte b : statebyte ) {
+          System.out.printf("%02X", b);
+        }
+        System.out.printf(" ");
+      }
+      System.out.println("");
+    }
+  }
+  
   public byte[] pad( byte[] message, int block_length )
   {
     int pad_length = (message.length * 8) % block_length;
     byte[] pad_bytes = {(byte) 0x81, 0x00, (byte) 0x80, 0x01};
-    pad_length = pad_length / 8; // Convert padding length from bits to bytes.
     if( 0 == pad_length ) {
       pad_length = block_length / 8; // Message already multiple of block size. Add another block.
     }
@@ -60,6 +77,8 @@ public class Keccak
   {
     int num_message_blocks = (message.length * 8) / block_length;
     block_length = block_length / 8; // Make block length equivalent to in bytes.
+//    System.out.println("number of message blocks "+ message.length +" and block "
+//        + "length is "+ block_length);
     byte[][] message_blocks = new byte[ num_message_blocks ][ block_length ];
     for( int i = 0; i < num_message_blocks; i++)
     {
@@ -86,11 +105,10 @@ public class Keccak
       for( int j = 0; j < 5; j++ )
       {
         byte[] temp = new byte[8];
-        for( int k = 0; k < 8; k++ ) 
-        {
-          int row_offset = 5 * 8 * i;
-          int column_offset = (j + 1) * 8;
-          temp[k] =  msg_block[row_offset + column_offset - 1 - k];
+        int row_offset = 5 * 8 * i;
+        int column_offset = (j + 1) * 8;
+        for( int k = 0; k < 8; k++ ) {          
+          temp[k] =  temp_block[row_offset + column_offset - 1 - k];
         }
         wrapped = ByteBuffer.wrap( temp );
         long temp_long = wrapped.getLong();
@@ -104,16 +122,16 @@ public class Keccak
   public long rotation( long lane, int rotate )
   {
     rotate = rotate % 64;
-    lane = ((lane >>> (64 - rotate)) + (lane << rotate)) % (1 << 64);
+    lane = (lane >>> (64 - rotate)) | (lane << rotate);
     return lane;
   }
   
   public long[][] theta( long[][] state )
   {
-    long [] c = { 0, 0, 0, 0, 0 };
-    long [] d = { 0, 0, 0, 0, 0 };
+    long [] c = new long[5];
+    long [] d = new long[5];
     for( int i = 0; i < 5; i++ ) {
-      c[i] = state[i][0] ^ state[i][1] ^ state[i][2] ^ state[i][3] ^ state[i][4];
+      c[i] = state[0][i] ^ state[1][i] ^ state[2][i] ^ state[3][i] ^ state[4][i];
     }
     d[0] = c[4] ^ rotation(c[1], 1);
     for( int i = 1; i < 5; i++ ) {
@@ -122,7 +140,7 @@ public class Keccak
     for( int i = 0; i < 5; i++ )
     {
       for( int j = 0; j < 5; j++ ) {
-        state[i][j] = state[i][j] ^ d[i];
+        state[i][j] = state[i][j] ^ d[j];
       }
     }
     return state;
@@ -130,8 +148,7 @@ public class Keccak
   
   public long[][] rhoPi( long[][] state )
   {
-    long[][] b = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 
-        {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+    long[][] b = new long[5][5];
     for( int i = 0; i < 5; i++ )
     {
       for( int j = 0; j < 5; j++ ) {
@@ -143,23 +160,71 @@ public class Keccak
   
   public long[][] chi( long[][] state )
   {
-    return null;
-  }
-  
-  public long[][] permute( long[][] state )
-  {
-    for( int i = 0; i < 24; i++ )
+    long[][] temp = new long[5][5];
+    for( int i = 0; i < 5; i++ )
     {
-      state = theta( state );
-      state = rhoPi( state );
-      state = chi( state );
-      //Chi
-      //RC
+      for( int j = 0; j < 5; j++ ) {
+        temp[i][j] = state[i][j];
+      }
     }
-    return null;
+    for( int i = 0; i < 5; i++ )
+    {
+      for( int j = 0; j < 5; j++ ) {
+        state[i][j] = temp[i][j] ^ ((~temp[(i + 1) % 5][j]) & temp[(i + 2) % 5][j]);
+      }
+    }
+    return state;
   }
   
-  public byte[] transform( byte[] message, int bit_rate )
+  public long[][] permute( long[][] state, int rounds )
+  {
+    System.out.println("Before rounds");
+    printState(state);
+    for( int i = 0; i < rounds; i++ )
+    {
+      System.out.println("round "+ i);
+      state = theta( state );
+      System.out.println("after theta ");
+      printState(state);
+      state = rhoPi( state );
+      System.out.println("after rho pi ");
+      printState(state);
+      state = chi( state );
+      System.out.println("after chi ");
+      printState(state);
+      state[0][0] = state[0][0] ^ RC[i];
+      System.out.println("after round constant ");
+      printState(state);
+    }
+    return state;
+  }
+  
+  public byte[] squeeze( long[][] state, int digest_length )
+  {
+    long temp;
+    byte[] hashed = new byte[ 200 ];
+    for( int i = 0; i < 5; i++ )
+    {
+      for( int j = 0; j < 5; j++ )
+      {
+        temp = state[i][j];
+        ByteBuffer buf = ByteBuffer.allocate(8);
+        buf.putLong( temp );
+        byte[] lane = buf.array();
+        for( int k = 0; k < 8; k++ ) {
+          hashed[(i * 40) + (j * 8) + k] = lane[7 - k];
+        }
+      }
+    }
+    digest_length = digest_length / 8; // Get the length in bytes.
+    byte[] squeezed = new byte[ digest_length ];
+    for( int i = 0; i < digest_length; i++ ) {
+      squeezed[i] = hashed[i];
+    }
+    return squeezed;
+  }
+  
+  public byte[] transform( byte[] message, int bit_rate, int rounds )
   {
     long[][] state = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 
         {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
@@ -167,24 +232,29 @@ public class Keccak
     for( byte[] block : msg_blocks )
     {
       state = xorStatePermutation( state, block );
-      state = permute( state );
+      state = permute( state, rounds );
     }
-    return null;
+    byte[] hash = squeeze( state, (1600 - bit_rate) / 2 );
+    return hash;
   }
   
-  public byte[] hash( String message,  int digest_length )
+  public byte[] hash( String message,  int digest_length, int rounds )
   {
     int capacity = 2 * digest_length;
     int bit_rate = 1600 - capacity;    // block length
+    rounds = rounds == 0 ? 24 : rounds;
     byte[] msg = convertHexStringToBytes( message );
     byte[] padded_msg = pad( msg, bit_rate );
-    byte[] hash = transform( padded_msg, bit_rate );
-    return null;
+    byte[] hash = transform( padded_msg, bit_rate, rounds );
+    return hash;
   }
   
-  public static void main()
+  public static void main( String [] args )
   {
-    // 2 * digest length = capacity
-    // bit rate = block length = 1600 - capacity
+    Keccak k = new Keccak();
+    byte[] hashed = k.hash("00112233445566778899AABBCCDDEEFF", 224, 1);
+    for( byte b : hashed ) {
+      System.out.printf("%02X", b);
+    }
   }
 }
