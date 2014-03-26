@@ -71,7 +71,15 @@ public class Keccak
    */
   public byte[] pad( byte[] message, int block_length )
   {
-    int pad_length = (message.length * 8) % block_length;
+    int pad_length = 0; // Padding length in Bytes.
+//    System.out.println("block length "+ block_length +" message length "+ message.length);
+    if (block_length >= (message.length * 8)) {
+      pad_length = block_length - (message.length * 8);
+    } else {
+      pad_length = (message.length * 8) % block_length;
+    }
+    pad_length = pad_length / 8;  // Convert the above bit value to byte value.
+//    System.out.println("pad length "+ pad_length);
     byte[] pad_bytes = {(byte) 0x81, 0x00, (byte) 0x80, 0x01};
     if( 0 == pad_length ) {
       pad_length = block_length / 8; // Message already multiple of block size. Add another block.
@@ -344,7 +352,13 @@ public class Keccak
   public static void main( String [] args )
   {
     Keccak k = new Keccak();
-    byte[] hashed = k.hash("00112233445566778899AABBCCDDEEFF", 224, 0);
+    byte[] hashed = k.hash("3A3A819C48EFDE2AD914FBF00E18AB6BC4F14513AB27D0C178A188B61431E7F5623CB6"
+        + "6B23346775D386B50E982C493ADBBFC54B9A3CD383382336A1A0B2150A15358F336D03AE18F666C7573D55C"
+        + "4FD181C29E6CCFDE63EA35F0ADF5885CFC0A3D84A2B2E4DD24496DB789E663170CEF74798AA1BBCD4574EA0"
+        + "BBA40489D764B2F83AADC66B148B4A0CD95246C127D5871C4F11418690A5DDF01246A0C80A43C70088B6183"
+        + "639DCFDA4125BD113A8F49EE23ED306FAAC576C3FB0C1E256671D817FC2534A52F5B439F72E424DE376F4C5"
+        + "65CCA82307DD9EF76DA5B7C4EB7E085172E328807C02D011FFBF33785378D79DC266F6A5BE6BB0E4A92ECEE"
+        + "BAEB1", 224, 0);
     for( byte b : hashed ) {
       System.out.printf("%02X", b);
     }
