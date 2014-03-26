@@ -4,13 +4,13 @@ import java.nio.ByteBuffer;
 
 public class Keccak 
 {  
-  public static final long[] RC = { 0x0000000000000001, 0x0000000000008082,
-    0x800000000000808AL, 0x8000000080008000L, 0x000000000000808BL, 0x0000000080000001L,
-    0x8000000080008081L, 0x8000000000008009L, 0x000000000000008AL, 0x0000000000000088L,
-    0x0000000080008009, 0x000000008000000AL, 0x000000008000808BL, 0x800000000000008BL,
-    0x8000000000008089L, 0x8000000000008003L, 0x8000000000008002L, 0x8000000000000080L,
-    0x000000000000800AL, 0x800000008000000AL, 0x8000000080008081L, 0x8000000000008080L,
-    0x0000000080000001, 0x8000000080008008L };
+  public static final long[] RC = { 0x0000000000000001L, 0x0000000000008082L, 
+    0x800000000000808AL, 0x8000000080008000L, 0x000000000000808BL, 0x0000000080000001L, 
+    0x8000000080008081L, 0x8000000000008009L, 0x000000000000008AL, 0x0000000000000088L, 
+    0x0000000080008009L, 0x000000008000000AL, 0x000000008000808BL, 0x800000000000008BL, 
+    0x8000000000008089L, 0x8000000000008003L, 0x8000000000008002L, 0x8000000000000080L, 
+    0x000000000000800AL, 0x800000008000000AL, 0x8000000080008081L, 0x8000000000008080L, 
+    0x0000000080000001L, 0x8000000080008008L };
   
   public static final int[][] ROTATION = {{0, 36, 3, 41, 18}, {1, 44, 10, 45, 2},
     {62, 6, 43, 15, 61}, {28, 55, 25, 21, 56}, {27, 20, 39, 8, 14}};
@@ -77,8 +77,6 @@ public class Keccak
   {
     int num_message_blocks = (message.length * 8) / block_length;
     block_length = block_length / 8; // Make block length equivalent to in bytes.
-//    System.out.println("number of message blocks "+ message.length +" and block "
-//        + "length is "+ block_length);
     byte[][] message_blocks = new byte[ num_message_blocks ][ block_length ];
     for( int i = 0; i < num_message_blocks; i++)
     {
@@ -148,14 +146,27 @@ public class Keccak
   
   public long[][] rhoPi( long[][] state )
   {
+    long[][] temp = new long[5][5];
+    for( int i = 0; i < 5; i++ )
+    {
+      for( int j = 0; j < 5; j++ ) {
+        temp[j][i] = state[i][j];
+      }
+    }
     long[][] b = new long[5][5];
     for( int i = 0; i < 5; i++ )
     {
       for( int j = 0; j < 5; j++ ) {
-        b[j][((2 * i) + (3 * j)) % 5] = rotation(state[i][j], ROTATION[i][j]);
+        b[j][((2 * i) + (3 * j)) % 5] = rotation(temp[i][j], ROTATION[i][j]);
       }
     }
-    return b;
+    for( int i = 0; i < 5; i++ )
+    {
+      for( int j = 0; j < 5; j++ ) {
+        state[i][j] = b[j][i];
+      }
+    }
+    return state;
   }
   
   public long[][] chi( long[][] state )
@@ -164,13 +175,13 @@ public class Keccak
     for( int i = 0; i < 5; i++ )
     {
       for( int j = 0; j < 5; j++ ) {
-        temp[i][j] = state[i][j];
+        temp[i][j] = state[j][i];
       }
     }
     for( int i = 0; i < 5; i++ )
     {
       for( int j = 0; j < 5; j++ ) {
-        state[i][j] = temp[i][j] ^ ((~temp[(i + 1) % 5][j]) & temp[(i + 2) % 5][j]);
+        state[j][i] = temp[i][j] ^ ((~temp[(i + 1) % 5][j]) & temp[(i + 2) % 5][j]);
       }
     }
     return state;
@@ -178,23 +189,12 @@ public class Keccak
   
   public long[][] permute( long[][] state, int rounds )
   {
-    System.out.println("Before rounds");
-    printState(state);
     for( int i = 0; i < rounds; i++ )
     {
-      System.out.println("round "+ i);
       state = theta( state );
-      System.out.println("after theta ");
-      printState(state);
       state = rhoPi( state );
-      System.out.println("after rho pi ");
-      printState(state);
       state = chi( state );
-      System.out.println("after chi ");
-      printState(state);
       state[0][0] = state[0][0] ^ RC[i];
-      System.out.println("after round constant ");
-      printState(state);
     }
     return state;
   }
@@ -252,7 +252,7 @@ public class Keccak
   public static void main( String [] args )
   {
     Keccak k = new Keccak();
-    byte[] hashed = k.hash("00112233445566778899AABBCCDDEEFF", 224, 1);
+    byte[] hashed = k.hash("00112233445566778899AABBCCDDEEFF", 224, 0);
     for( byte b : hashed ) {
       System.out.printf("%02X", b);
     }
