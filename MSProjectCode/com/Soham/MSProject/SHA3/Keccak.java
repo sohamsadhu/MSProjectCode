@@ -2,8 +2,18 @@ package com.Soham.MSProject.SHA3;
 
 import java.nio.ByteBuffer;
 
+/**
+ * This Keccak class accepts only hexadecimal representation of bytes to be hashed as string.
+ * The state is assumed to of 1600 bits and only hash lengths that are supported by this are
+ * 224, 256, 384 and 512 as per the NIST specification. Any other digest lengths are not supported.
+ * @author Soham Sadhu
+ */
 public class Keccak 
 {  
+  /* The L after each of the long type needs to be there, else the Java compiler thinks that 
+   * leading zeros are absent, with the sign bit set. This leads to weird results. Look here
+   * for the explanation. http://stackoverflow.com/questions/22651465/bitwise-xor-java-long
+   */
   public static final long[] RC = { 0x0000000000000001L, 0x0000000000008082L, 
     0x800000000000808AL, 0x8000000080008000L, 0x000000000000808BL, 0x0000000080000001L, 
     0x8000000080008081L, 0x8000000000008009L, 0x000000000000008AL, 0x0000000000000088L, 
@@ -12,6 +22,9 @@ public class Keccak
     0x000000000000800AL, 0x800000008000000AL, 0x8000000080008081L, 0x8000000000008080L, 
     0x0000000080000001L, 0x8000000080008008L };
   
+  /* The rotation numbers are based on x value of the row. Be careful to set this up this way,
+   * else the Rho Pi step goes awry.
+   */
   public static final int[][] ROTATION = {{0, 36, 3, 41, 18}, {1, 44, 10, 45, 2},
     {62, 6, 43, 15, 61}, {28, 55, 25, 21, 56}, {27, 20, 39, 8, 14}};
   
@@ -28,6 +41,10 @@ public class Keccak
     return message;
   }
   
+  /**
+   * Just print the state as it is.
+   * @param state of Keccak, assumed to be of 1600 bits.
+   */
   public void printState( long[][] state )
   {
     for( long[] row : state )
@@ -46,6 +63,12 @@ public class Keccak
     }
   }
   
+  /**
+   * Pad the message as per the bit rate of the function.
+   * @param message
+   * @param block_length this is the bit rate of the function.
+   * @return The padded message.
+   */
   public byte[] pad( byte[] message, int block_length )
   {
     int pad_length = (message.length * 8) % block_length;
@@ -73,6 +96,12 @@ public class Keccak
     return padded_message;
   }
   
+  /**
+   * Break the message into blocks are per the bit rate.
+   * @param message
+   * @param block_length
+   * @return 2D array of bytes, with second dimension holding the blocks.
+   */
   public byte[][] getMsgBlocks( byte[] message, int block_length )
   {
     int num_message_blocks = (message.length * 8) / block_length;
@@ -87,6 +116,12 @@ public class Keccak
     return message_blocks;
   }
   
+  /**
+   * Called each time during absorption, when message state absorbed block by block.
+   * @param state
+   * @param msg_block
+   * @return
+   */
   public long[][] xorStatePermutation( long[][] state, byte[] msg_block )
   {
     byte[] temp_block = new byte[ 200 ]; // State size is fixed at 1600 bits.
@@ -116,7 +151,14 @@ public class Keccak
     return state;
   }
   
-  // Source: Keccak Python implementation by Renaud Bauvin
+  /**
+   * Is the rot or the rotation function used in Keccak. Used in rho step for putting shifting
+   * the lanes. Note the use of unsigned right shift operator >>>.
+   * Source: Keccak Python implementation by Renaud Bauvin
+   * @param lane
+   * @param rotate
+   * @return
+   */
   public long rotation( long lane, int rotate )
   {
     rotate = rotate % 64;
@@ -124,6 +166,11 @@ public class Keccak
     return lane;
   }
   
+  /**
+   * Theta works on the column, the first index x in specification is not the row but the column.
+   * @param state
+   * @return
+   */
   public long[][] theta( long[][] state )
   {
     long [] c = new long[5];
@@ -144,6 +191,16 @@ public class Keccak
     return state;
   }
   
+  /**
+   * The state that I had created put the message blocks one after other row-wise in little 
+   * endian format. However the state is supposed to be little endian and placed column wise one
+   * after other, rather than row wise. That is what you see me doing in the first and last for 
+   * loop before the operation, that is putting my state column wise from row wise and then after
+   * operation rearranging them row wise. Also note the use of j and i indices in operation loop.
+   * They have been arranged to reflect the pseudocode of specification using x and y.
+   * @param state
+   * @return
+   */
   public long[][] rhoPi( long[][] state )
   {
     long[][] temp = new long[5][5];
@@ -153,6 +210,7 @@ public class Keccak
         temp[j][i] = state[i][j];
       }
     }
+    // Rho Pi operation loop begins.
     long[][] b = new long[5][5];
     for( int i = 0; i < 5; i++ )
     {
@@ -160,6 +218,7 @@ public class Keccak
         b[j][((2 * i) + (3 * j)) % 5] = rotation(temp[i][j], ROTATION[i][j]);
       }
     }
+    // Rho Pi operation loop ends.
     for( int i = 0; i < 5; i++ )
     {
       for( int j = 0; j < 5; j++ ) {
@@ -169,6 +228,12 @@ public class Keccak
     return state;
   }
   
+  /**
+   * Again here the state is row wise for me, so the chi operation results are stored column wise
+   * instead of row wise. The actual results are though pulled from same state.
+   * @param state
+   * @return
+   */
   public long[][] chi( long[][] state )
   {
     long[][] temp = new long[5][5];
@@ -187,6 +252,12 @@ public class Keccak
     return state;
   }
   
+  /**
+   * Just permute the provided block for as many rounds, as per the round parameter.
+   * @param state
+   * @param rounds
+   * @return
+   */
   public long[][] permute( long[][] state, int rounds )
   {
     for( int i = 0; i < rounds; i++ )
@@ -199,6 +270,13 @@ public class Keccak
     return state;
   }
   
+  /**
+   * After absorption, squeeze the required bits. This function is called once, since for our
+   * implementation the digest length is shorter than the state size.
+   * @param state
+   * @param digest_length
+   * @return
+   */
   public byte[] squeeze( long[][] state, int digest_length )
   {
     long temp;
@@ -224,6 +302,13 @@ public class Keccak
     return squeezed;
   }
   
+  /**
+   * The method that does bulk of transformation from absorbing to squeezing.
+   * @param message
+   * @param bit_rate
+   * @param rounds
+   * @return
+   */
   public byte[] transform( byte[] message, int bit_rate, int rounds )
   {
     long[][] state = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 
@@ -238,6 +323,13 @@ public class Keccak
     return hash;
   }
   
+  /**
+   * Call this function to get your hash.
+   * @param message hexadecimal string representing message in bytes.
+   * @param digest_length either 224, 256, 384, or 512
+   * @param rounds will be 24 if provided by zero or will be done as provided.
+   * @return
+   */
   public byte[] hash( String message,  int digest_length, int rounds )
   {
     int capacity = 2 * digest_length;
