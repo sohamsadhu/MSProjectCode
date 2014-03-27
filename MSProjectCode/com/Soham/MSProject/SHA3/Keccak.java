@@ -71,15 +71,11 @@ public class Keccak
    */
   public byte[] pad( byte[] message, int block_length )
   {
-    int pad_length = 0; // Padding length in Bytes.
-//    System.out.println("block length "+ block_length +" message length "+ message.length);
-    if (block_length >= (message.length * 8)) {
-      pad_length = block_length - (message.length * 8);
-    } else {
-      pad_length = (message.length * 8) % block_length;
+    int pad_length = (message.length * 8) % block_length;
+    if( pad_length != 0 ) {
+      pad_length = block_length - pad_length; // Find how many bits you need to fill.
     }
     pad_length = pad_length / 8;  // Convert the above bit value to byte value.
-//    System.out.println("pad length "+ pad_length);
     byte[] pad_bytes = {(byte) 0x81, 0x00, (byte) 0x80, 0x01};
     if( 0 == pad_length ) {
       pad_length = block_length / 8; // Message already multiple of block size. Add another block.
