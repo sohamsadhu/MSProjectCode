@@ -60,13 +60,25 @@ public class BLAKE
     return message;
   }
   
-  /**
-   * Pad the message with 10*1 or 10* and 64 bit representation of message bit length, which is
-   * multiple of 512 bits.
-   * @param message
-   * @param digest_length has to be 224 or 256
-   * @return
-   */
+  public byte[] padHelper( byte[] pad_msg, int msg_len, int zero_bytes, int digest_len,
+      byte[] bit_len, byte[] msg )
+  {
+    for( int i = 0; i < msg_len; i++ ) {
+      pad_msg[i] = msg[i];
+    }
+    pad_msg[msg_len] = ( byte )0x80;
+    int zero_index = msg_len + 1 + zero_bytes; // zero_index = pad_msg.length - (17 or 9)
+    for( int i = msg_len + 1; i < zero_index; i++ ) {
+      pad_msg[i] = ( byte )0x00;
+    }
+    pad_msg[zero_index] = ((512 == digest_len) || (256 == digest_len)) ? (byte)0x01 : (byte)0x00;
+    int word_len = ((384 == digest_len) || (512 == digest_len)) ? 16 : 8;
+    for( int i = 0; i < word_len; i++ ) {
+      pad_msg[pad_msg.length - word_len + i] = bit_len[i];
+    }
+    return pad_msg;
+  }
+  
   public byte[] pad256( byte[] message, int digest_length )
   {
     if( !((224 == digest_length) || (256 == digest_length))) { return null; }
@@ -101,12 +113,6 @@ public class BLAKE
     }
   }
   
-  /**
-   * Pad the message, so that it is multiple of 1024 bits.
-   * @param message
-   * @param digest_length has to be either 384 or 512 bits.
-   * @return
-   */
   public byte[] pad512( byte[] message, int digest_length )
   {
     if( !((384 == digest_length) || (512 == digest_length)) ){ return null; }
@@ -141,25 +147,6 @@ public class BLAKE
       int zero_bytes = pad_msg.length - message.length - 18; // 16 bit len + 2 for 0x80 & 0x00/0x01
       return padHelper( pad_msg, message.length, zero_bytes, digest_length, bit_len, message );
     }
-  }
-  
-  public byte[] padHelper( byte[] pad_msg, int msg_len, int zero_bytes, int digest_len,
-      byte[] bit_len, byte[] msg )
-  {
-    for( int i = 0; i < msg_len; i++ ) {
-      pad_msg[i] = msg[i];
-    }
-    pad_msg[msg_len] = ( byte )0x80;
-    int zero_index = msg_len + 1 + zero_bytes; // zero_index = pad_msg.length - (17 or 9)
-    for( int i = msg_len + 1; i < zero_index; i++ ) {
-      pad_msg[i] = ( byte )0x00;
-    }
-    pad_msg[zero_index] = ((512 == digest_len) || (256 == digest_len)) ? (byte)0x01 : (byte)0x00;
-    int word_len = ((384 == digest_len) || (512 == digest_len)) ? 16 : 8;
-    for( int i = 0; i < word_len; i++ ) {
-      pad_msg[pad_msg.length - word_len + i] = bit_len[i];
-    }
-    return pad_msg;
   }
   
   public byte[] hash( String msg, int digest_length, int rounds )
