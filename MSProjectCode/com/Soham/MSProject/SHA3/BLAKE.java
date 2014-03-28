@@ -1,8 +1,6 @@
 package com.Soham.MSProject.SHA3;
 
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 public class BLAKE 
 {
@@ -62,58 +60,20 @@ public class BLAKE
     return message;
   }
   
-  public ArrayList<Byte> padding( ArrayList<Byte> msg, int word_size )
+  /**
+   * Pad the message with 10*1 or 10* and 64 bit representation of message bit length, which is
+   * multiple of 512 bits.
+   * @param message
+   * @param digest_length has to be 224 or 256
+   * @return
+   */
+  public byte[] pad256( byte[] message, int digest_length )
   {
-    byte[] padding_bytes = new byte[]{ (byte)0x80, (byte)0x00, (byte)0x01, (byte)0x81 };
-    int bytes_append = msg.size()  % 64;
-    if( bytes_append < 56 )
-    {
-      if( bytes_append <= 54 )
-      {
-        msg.add( padding_bytes[0] );
-        int zero_bytes = 56 - (bytes_append + 2);
-        for( int i = 0; i < zero_bytes; i++ ) {
-          msg.add( padding_bytes[1] );
-        }
-        msg.add( padding_bytes[2] );
-      }
-      else { // bytes_append == 55
-        msg.add( padding_bytes[3] );
-      }
-    }
-    else
-    {
-      msg.add( padding_bytes[0] );
-      bytes_append = (msg.size() % 64) + 55;
-      for( int i = 0; i < bytes_append; i++ ) {
-        msg.add( padding_bytes[1] );
-      }
-      msg.add( padding_bytes[2] );
-    }
-    int length = msg.size() * 8; // For message of size l bits
-    BigInteger bi = BigInteger.valueOf( length );
-    byte[] temp_num_bitlength = bi.toByteArray();
-    byte[] byte_num_bitlength = new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    for( int i = 0; i < temp_num_bitlength.length; i++ ) 
-    {
-      byte_num_bitlength[ byte_num_bitlength.length - 1 - i ] |= 
-          temp_num_bitlength[temp_num_bitlength.length - 1 - i ]; 
-    }
-    for( byte b : byte_num_bitlength ) {
-      msg.add(b);
-    }
-    return msg;
-  }
-  
-  public byte[] pad224()
-  {
-    return null;
-  }
-  
-  public byte[] pad256( byte[] message )
-  {
-    byte[] padding_byte = { (byte)0x81, (byte)0x80, (byte)0x01, (byte)0x00 };
+    if( !((224 == digest_length) || (256 == digest_length))) { return null; }
     long msg_bit_len = message.length * 8;
+    ByteBuffer buf = ByteBuffer.allocate(8);
+    buf.putLong( msg_bit_len );
+    byte[] bit_len = buf.array(); // <l> length of message in bits, in 64 bit format.
     int bits_remaining = ( int )(msg_bit_len % 512); // For our applications message length is small.
     if( 440 == bits_remaining ) // Only byte 0x81 needs to append and <l>64
     {
@@ -121,26 +81,85 @@ public class BLAKE
       for( int i = 0; i < message.length; i++ ) {
         pad_msg[i] = message[i];
       }
-      pad_msg[ message.length ] = padding_byte[0];
-      ByteBuffer buf = ByteBuffer.allocate(8);
-      buf.putLong( msg_bit_len );
-      byte[] bit_len = buf.array();
+      pad_msg[ message.length ] = (224 == digest_length) ? (byte)0x80 : (byte)0x81;
       for( int i = 0; i < 8; i++ ) {
         pad_msg[message.length + 1 + i] = bit_len[i];
       }
       return pad_msg;
     }
-    return null;
+    if( bits_remaining > 440 )
+    {
+      byte[] pad_msg = new byte[ message.length + 64 + (64 - (bits_remaining / 8)) ];
+      int zero_bytes = 55 + ((512 - bits_remaining - 8) / 8);
+      return padHelper( pad_msg, message.length, zero_bytes, digest_length, bit_len, message );
+    }
+    else // bits_remaining < 440
+    {
+      byte[] pad_msg = new byte[message.length + ((512 - bits_remaining) / 8)];
+      int zero_bytes = ((512 - bits_remaining) / 8) - 2; // Subtract 2 for 0x80 and 0x01/0x00
+      return padHelper( pad_msg, message.length, zero_bytes, digest_length, bit_len, message );
+    }
   }
   
-  public byte[] pad384()
+  /**
+   * Pad the message, so that it is multiple of 1024 bits.
+   * @param message
+   * @param digest_length has to be either 384 or 512 bits.
+   * @return
+   */
+  public byte[] pad512( byte[] message, int digest_length )
   {
-    return null;
+    if( !((384 == digest_length) || (512 == digest_length)) ){ return null; }
+    long msg_bit_len = message.length * 8;   // For our purpose the message is not around 1 ^ 128.
+    ByteBuffer buf = ByteBuffer.allocate(8);
+    buf.putLong( msg_bit_len );
+    byte[] msg_bit_len_arr = buf.array();
+    byte[] bit_len = new byte[16];
+    for( int i = 0; i < 16; i++ ) { bit_len[i] = 0x00; }
+    for( int i = 7; i >= 0; i++ ) {
+      bit_len[ 8 + i ] = msg_bit_len_arr[i];
+    }
+    int bits_remaining = (message.length * 8) % 1024;
+    if( 888 == bits_remaining )
+    {
+      byte[] pad_message = new byte[ message.length + 17 ];
+      pad_message[ message.length ] = (512 == digest_length) ? (byte)0x81 : (byte)0x80;
+      for( int i = 0; i < 16; i++ ) {
+        pad_message[ message.length + 1 + i ] = bit_len[i];
+      }
+      return pad_message;
+    }
+    if( bits_remaining < 888 )
+    {
+      byte[] pad_msg = new byte[message.length + ((1024 - bits_remaining) / 8)];
+      int zero_bytes = (888 - (bits_remaining + 8)) / 8;
+      return padHelper( pad_msg, message.length, zero_bytes, digest_length, bit_len, message );
+    }
+    else // bits_remaining > 888
+    {
+      byte[] pad_msg = new byte[message.length + 128 + ((1024 - bits_remaining) / 8)];
+      int zero_bytes = pad_msg.length - message.length - 18; // 16 bit len + 2 for 0x80 & 0x00/0x01
+      return padHelper( pad_msg, message.length, zero_bytes, digest_length, bit_len, message );
+    }
   }
   
-  public byte[] pad512()
+  public byte[] padHelper( byte[] pad_msg, int msg_len, int zero_bytes, int digest_len,
+      byte[] bit_len, byte[] msg )
   {
-    return null;
+    for( int i = 0; i < msg_len; i++ ) {
+      pad_msg[i] = msg[i];
+    }
+    pad_msg[msg_len] = ( byte )0x80;
+    int zero_index = msg_len + 1 + zero_bytes; // zero_index = pad_msg.length - (17 or 9)
+    for( int i = msg_len + 1; i < zero_index; i++ ) {
+      pad_msg[i] = ( byte )0x00;
+    }
+    pad_msg[zero_index] = ((512 == digest_len) || (256 == digest_len)) ? (byte)0x01 : (byte)0x00;
+    int word_len = ((384 == digest_len) || (512 == digest_len)) ? 16 : 8;
+    for( int i = 0; i < word_len; i++ ) {
+      pad_msg[pad_msg.length - word_len + i] = bit_len[i];
+    }
+    return pad_msg;
   }
   
   public byte[] hash( String msg, int digest_length, int rounds )
@@ -150,13 +169,17 @@ public class BLAKE
     switch( digest_length )
     {
     case 224:
-      padded_msg = pad224();
+      padded_msg = pad256( message, digest_length );
       break;
     case 256:
-      padded_msg = pad256( message );
+      padded_msg = pad256( message, digest_length );
       break;
     case 384:
+      padded_msg = pad512( message, digest_length );
+      break;
     case 512:
+      padded_msg = pad512( message, digest_length );
+      break;
     }
     return null;
   }
