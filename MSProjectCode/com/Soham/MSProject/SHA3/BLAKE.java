@@ -60,7 +60,7 @@ public class BLAKE
     return message;
   }
   
-  public byte[] padHelper( byte[] pad_msg, int msg_len, int digest_len, byte[] bit_len,
+  public byte[] padHelper2( byte[] pad_msg, int msg_len, int digest_len, byte[] bit_len,
       byte[] msg )
   {
     for( int i = 0; i < msg_len; i++ ) {
@@ -79,6 +79,21 @@ public class BLAKE
     return pad_msg;
   }
   
+  public byte[] padHelper1( byte[] message, byte[] bit_len, int digest_length )
+  {
+    int pad_len = ((224 == digest_length) || (256 == digest_length)) ? 9 : 17;
+    byte[] pad_msg = new byte[message.length + pad_len];
+    for( int i = 0; i < message.length; i++ ) {
+      pad_msg[i] = message[i];
+    }
+    pad_msg[message.length] = ((224 == digest_length) || (384 == digest_length)) ? 
+        (byte)0x80 : (byte)0x81;
+    for( int i = 0; i < (pad_len - 1); i++ ) {
+      pad_msg[message.length + 1 + i] = bit_len[i];
+    }
+    return pad_msg;
+  }
+  
   public byte[] pad256( byte[] message, int digest_length )
   {
     if( !((224 == digest_length) || (256 == digest_length))) { return null; }
@@ -87,27 +102,18 @@ public class BLAKE
     buf.putLong( msg_bit_len );
     byte[] bit_len = buf.array(); // <l> length of message in bits, in 64 bit format.
     int bits_remaining = ( int )(msg_bit_len % 512); // For our applications message length is small.
-    if( 440 == bits_remaining ) // Only byte 0x81 needs to append and <l>64
-    {
-      byte[] pad_msg = new byte[message.length + 9];
-      for( int i = 0; i < message.length; i++ ) {
-        pad_msg[i] = message[i];
-      }
-      pad_msg[ message.length ] = (224 == digest_length) ? (byte)0x80 : (byte)0x81;
-      for( int i = 0; i < 8; i++ ) {
-        pad_msg[message.length + 1 + i] = bit_len[i];
-      }
-      return pad_msg;
+    if( 440 == bits_remaining ) { // Only byte 0x81 needs to append and <l>64
+      return padHelper1( message, bit_len, digest_length );
     }
     if( bits_remaining > 440 )
     {
       byte[] pad_msg = new byte[ message.length + 64 + (64 - (bits_remaining / 8)) ];
-      return padHelper( pad_msg, message.length, digest_length, bit_len, message );
+      return padHelper2( pad_msg, message.length, digest_length, bit_len, message );
     }
     else // bits_remaining < 440
     {
       byte[] pad_msg = new byte[message.length + ((512 - bits_remaining) / 8)];
-      return padHelper( pad_msg, message.length, digest_length, bit_len, message );
+      return padHelper2( pad_msg, message.length, digest_length, bit_len, message );
     }
   }
   
@@ -124,27 +130,18 @@ public class BLAKE
       bit_len[ 8 + i ] = msg_bit_len_arr[i];
     }
     int bits_remaining = (message.length * 8) % 1024;
-    if( 888 == bits_remaining )
-    {
-      byte[] pad_msg = new byte[ message.length + 17 ];
-      for( int i = 0; i < message.length; i++ ) {
-        pad_msg[i] = message[i];
-      }
-      pad_msg[ message.length ] = (512 == digest_length) ? (byte)0x81 : (byte)0x80;
-      for( int i = 0; i < 16; i++ ) {
-        pad_msg[ message.length + 1 + i ] = bit_len[i];
-      }
-      return pad_msg;
+    if( 888 == bits_remaining ) {
+      return padHelper1( message, bit_len, digest_length );
     }
     if( bits_remaining < 888 )
     {
       byte[] pad_msg = new byte[message.length + ((1024 - bits_remaining) / 8)];
-      return padHelper( pad_msg, message.length, digest_length, bit_len, message );
+      return padHelper2( pad_msg, message.length, digest_length, bit_len, message );
     }
     else // bits_remaining > 888
     {
       byte[] pad_msg = new byte[message.length + 128 + ((1024 - bits_remaining) / 8)];
-      return padHelper( pad_msg, message.length, digest_length, bit_len, message );
+      return padHelper2( pad_msg, message.length, digest_length, bit_len, message );
     }
   }
   
@@ -165,6 +162,10 @@ public class BLAKE
       break;
     case 512:
       padded_msg = pad512( message, digest_length );
+      System.out.println(" padded message length "+ padded_msg.length);
+      for( byte b : padded_msg ) {
+        System.out.printf("%02X", b);
+      }
       break;
     }
     return null;
