@@ -184,17 +184,44 @@ public class BLAKE
     return blocks;
   }
   
+  public byte[] transform32( int[][] blocks, int rounds, int msg_len )
+  {
+    int[] counter = new int[ blocks.length ]; // You will need as many counters as many blocks.
+    if((msg_len % 512) > 440) 
+    {
+      counter[counter.length - 1] = 0;
+      counter[counter.length - 2] = msg_len;
+    }
+    else
+    {
+      counter[counter.length - 1] = msg_len;
+      if(counter.length > 1){ counter[counter.length - 2] = 512; }
+    }
+    if( counter.length > 2 )
+    {
+      int bit_counter = 0;
+      for( int i = 0; i < (counter.length - 2); i++ ) 
+      {
+        bit_counter += 512;
+        counter[i] = bit_counter;
+      }
+    }
+    return null;
+  }
+  
   public byte[] hash( String msg, int digest_length, int rounds )
   {
-    byte[] message = convertHexStringToBytes( msg );
-    byte[] padded_msg;
-    int[][] blocks32bit;
-    long[][] blocks64bit;
+    byte [] message = convertHexStringToBytes( msg );
+    byte [] padded_msg;
+    byte [] hash;
+    int [][] blocks32bit;
+    long [][] blocks64bit;
     switch( digest_length )
     {
     case 224:
       padded_msg = pad256( message, digest_length );
       blocks32bit = getBlocks32Word( padded_msg );
+      hash = transform32( blocks32bit, rounds, message.length * 8 );
       break;
     case 256:
       padded_msg = pad256( message, digest_length );
