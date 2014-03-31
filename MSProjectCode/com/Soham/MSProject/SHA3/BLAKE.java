@@ -60,14 +60,14 @@ public class BLAKE
     return message;
   }
   
-  public byte[] padHelper( byte[] pad_msg, int msg_len, int zero_bytes, int digest_len,
-      byte[] bit_len, byte[] msg )
+  public byte[] padHelper( byte[] pad_msg, int msg_len, int digest_len, byte[] bit_len,
+      byte[] msg )
   {
     for( int i = 0; i < msg_len; i++ ) {
       pad_msg[i] = msg[i];
     }
     pad_msg[msg_len] = ( byte )0x80;
-    int zero_index = msg_len + 1 + zero_bytes; // zero_index = pad_msg.length - (17 or 9)
+    int zero_index = pad_msg.length - (((384 == digest_len) || (512 == digest_len)) ? 17 : 9);
     for( int i = msg_len + 1; i < zero_index; i++ ) {
       pad_msg[i] = ( byte )0x00;
     }
@@ -102,14 +102,12 @@ public class BLAKE
     if( bits_remaining > 440 )
     {
       byte[] pad_msg = new byte[ message.length + 64 + (64 - (bits_remaining / 8)) ];
-      int zero_bytes = 55 + ((512 - bits_remaining - 8) / 8);
-      return padHelper( pad_msg, message.length, zero_bytes, digest_length, bit_len, message );
+      return padHelper( pad_msg, message.length, digest_length, bit_len, message );
     }
     else // bits_remaining < 440
     {
       byte[] pad_msg = new byte[message.length + ((512 - bits_remaining) / 8)];
-      int zero_bytes = ((512 - bits_remaining) / 8) - 2; // Subtract 2 for 0x80 and 0x01/0x00
-      return padHelper( pad_msg, message.length, zero_bytes, digest_length, bit_len, message );
+      return padHelper( pad_msg, message.length, digest_length, bit_len, message );
     }
   }
   
@@ -122,30 +120,31 @@ public class BLAKE
     byte[] msg_bit_len_arr = buf.array();
     byte[] bit_len = new byte[16];
     for( int i = 0; i < 16; i++ ) { bit_len[i] = 0x00; }
-    for( int i = 7; i >= 0; i++ ) {
+    for( int i = 7; i >= 0; i-- ) {
       bit_len[ 8 + i ] = msg_bit_len_arr[i];
     }
     int bits_remaining = (message.length * 8) % 1024;
     if( 888 == bits_remaining )
     {
-      byte[] pad_message = new byte[ message.length + 17 ];
-      pad_message[ message.length ] = (512 == digest_length) ? (byte)0x81 : (byte)0x80;
-      for( int i = 0; i < 16; i++ ) {
-        pad_message[ message.length + 1 + i ] = bit_len[i];
+      byte[] pad_msg = new byte[ message.length + 17 ];
+      for( int i = 0; i < message.length; i++ ) {
+        pad_msg[i] = message[i];
       }
-      return pad_message;
+      pad_msg[ message.length ] = (512 == digest_length) ? (byte)0x81 : (byte)0x80;
+      for( int i = 0; i < 16; i++ ) {
+        pad_msg[ message.length + 1 + i ] = bit_len[i];
+      }
+      return pad_msg;
     }
     if( bits_remaining < 888 )
     {
       byte[] pad_msg = new byte[message.length + ((1024 - bits_remaining) / 8)];
-      int zero_bytes = (888 - (bits_remaining + 8)) / 8;
-      return padHelper( pad_msg, message.length, zero_bytes, digest_length, bit_len, message );
+      return padHelper( pad_msg, message.length, digest_length, bit_len, message );
     }
     else // bits_remaining > 888
     {
       byte[] pad_msg = new byte[message.length + 128 + ((1024 - bits_remaining) / 8)];
-      int zero_bytes = pad_msg.length - message.length - 18; // 16 bit len + 2 for 0x80 & 0x00/0x01
-      return padHelper( pad_msg, message.length, zero_bytes, digest_length, bit_len, message );
+      return padHelper( pad_msg, message.length, digest_length, bit_len, message );
     }
   }
   
@@ -172,5 +171,8 @@ public class BLAKE
   }
   
   public static void main( String[] args )
-  {}
+  {
+    BLAKE b = new BLAKE();
+    b.hash("", 224, 0);
+  }
 }
