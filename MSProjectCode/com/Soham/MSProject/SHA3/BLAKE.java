@@ -184,7 +184,54 @@ public class BLAKE
     return blocks;
   }
   
-  public byte[] transform32( int[][] blocks, int rounds, int msg_len )
+  public void g32( int a, int b, int c, int d, int[] state, int index, int[] msg, int round )
+  {
+    int sig1 = SIGMA[round % 10][2 * index];
+    int sig2 = SIGMA[round % 10][(2 * index) + 1];
+    state[a] = state[a] + state[b] + (msg[sig1] ^ CONST256[sig2]); //a ← a + b + (mσr (2i) ⊕ cσr (2i+1) )
+    state[d] = (state[d] ^ state[a]) >>> 16; //d ← (d ⊕ a) >>> 16
+    state[c] = state[c] + state[d]; //c ← c+d
+    state[b] = (state[b] + state[c]) >>> 12; //b ← (b ⊕ c) >>> 12
+    state[a] = state[a] + state[b] + (msg[sig2] ^ CONST256[sig1]);//a ← a + b + (mσr (2i+1) ⊕ cσr (2i) )
+    state[d] = (state[d] ^ state[a]) >>> 8; //d ← (d ⊕ a) >>> 8
+    state[c] = state[c] + state[d]; //c ← c+d
+    state[b] = (state[b] ^ state[c]) >>> 7; //b ← (b ⊕ c) >>> 7
+  }
+  
+  public int[] compress32( int[] pre_state, int[] block, int counter )
+  {
+    int [] state = new int[16];
+    state[0] = pre_state[0]; state[1] = pre_state[1]; state[2] = pre_state[2]; state[3] = pre_state[3];
+    state[4] = pre_state[4]; state[5] = pre_state[5]; state[6] = pre_state[6]; state[7] = pre_state[7];
+    // Salt is not there, no use of XOR with zero, so just assign the values.
+    state[8] = CONST256[0]; state[9] = CONST256[1]; state[10] = CONST256[2]; state[11] = CONST256[3];
+    // Our message is not above 2^32 bits, so just using int for the counter. The 1st 2 do not need it.
+    state[12] = CONST256[4]; state[13] = CONST256[5];
+    state[14] = counter ^ CONST256[6]; state[15] = counter ^ CONST256[7];
+    for( int i = 0; i < 14; i++ )
+    {
+      g32( 0, 4, 8,  12, state, 0, block, i ); //G0 (v0 , v4 , v8 , v12 )
+      g32( 1, 5, 9,  13, state, 1, block, i ); //G1 (v1 , v5 , v9 , v13 )
+      g32( 2, 6, 10, 14, state, 2, block, i ); //G2 (v2 , v6 , v10 , v14 )
+      g32( 3, 7, 11, 15, state, 3, block, i ); //G3 (v3 , v7 , v11 , v15 )
+      g32( 0, 5, 10, 15, state, 4, block, i ); //G4 (v0 , v5 , v10 , v15 )
+      g32( 1, 6, 11, 12, state, 5, block, i ); //G5 (v1 , v6 , v11 , v12 )
+      g32( 2, 7, 8,  13, state, 6, block, i ); //G6 (v2 , v7 , v8 , v13 )
+      g32( 3, 4, 9,  14, state, 7, block, i ); //G7 (v3 , v4 , v9 , v14 )
+    }
+    int[] finalised = new int[8]; // None of them are salted.
+    finalised[0] = pre_state[0] ^ state[0] ^ state[8];  // h0 ← h0 ⊕ s 0 ⊕ v0 ⊕ v8
+    finalised[1] = pre_state[1] ^ state[1] ^ state[9];  // h1 ← h1 ⊕ s 1 ⊕ v1 ⊕ v9
+    finalised[2] = pre_state[2] ^ state[2] ^ state[10]; // h2 ← h2 ⊕ s2 ⊕ v2 ⊕ v10
+    finalised[3] = pre_state[3] ^ state[3] ^ state[11]; // h3 ← h3 ⊕ s3 ⊕ v3 ⊕ v11
+    finalised[4] = pre_state[4] ^ state[4] ^ state[12]; // h4 ← h4 ⊕ s0 ⊕ v4 ⊕ v12
+    finalised[5] = pre_state[5] ^ state[5] ^ state[13]; // h5 ← h5 ⊕ s1 ⊕ v5 ⊕ v13
+    finalised[6] = pre_state[6] ^ state[6] ^ state[14]; // h6 ← h6 ⊕ s2 ⊕ v6 ⊕ v14
+    finalised[7] = pre_state[7] ^ state[7] ^ state[15]; // h7 ← h7 ⊕ s3 ⊕ v7 ⊕ v15
+    return finalised;
+  }
+  
+  public int[] transform32( int[][] blocks, int rounds, int msg_len, int digest_len )
   {
     int[] counter = new int[ blocks.length ]; // You will need as many counters as many blocks.
     if((msg_len % 512) > 440) 
@@ -206,7 +253,11 @@ public class BLAKE
         counter[i] = bit_counter;
       }
     }
-    return null;
+    int[] state = (224 == digest_len) ? IV224 : IV256;
+    for( int i = 0; i < blocks.length ; i++ ) {
+      state = compress32( state, blocks[i], counter[i] );
+    }
+    return state;
   }
   
   public byte[] transform64( long[][] blocks, int rounds, int msg_len )
@@ -234,11 +285,29 @@ public class BLAKE
     return null;
   }
   
+  public byte[] squeezeBytesInt( int[] hashed, int digest_len )
+  {
+    int end_point = digest_len / 32;
+    byte[] hash = new byte[ digest_len ];
+    ByteBuffer buf = ByteBuffer.allocate(4);
+    for( int i = 0; i < end_point; i++ )
+    {
+      buf.putInt( hashed[i] );
+      byte[] arr = buf.array();
+      for( int j = 0; j < 4; j++ ) {
+        hash[(i * 4) + j] = arr[j];
+      }
+    }
+    return hash;
+  }
+  
   public byte[] hash( String msg, int digest_length, int rounds )
   {
     byte [] message = convertHexStringToBytes( msg );
     byte [] padded_msg;
     byte [] hash;
+    int [] hash32;
+    long [] hash64;
     int [][] blocks32bit;
     long [][] blocks64bit;
     switch( digest_length )
@@ -246,13 +315,15 @@ public class BLAKE
     case 224:
       padded_msg = pad256( message, digest_length );
       blocks32bit = getBlocks32Word( padded_msg );
-      hash = transform32( blocks32bit, rounds, message.length * 8 );
-      break;
+      hash32 = transform32( blocks32bit, rounds, message.length * 8, digest_length );
+      hash = squeezeBytesInt( hash32, digest_length );
+      return hash;
     case 256:
       padded_msg = pad256( message, digest_length );
       blocks32bit = getBlocks32Word( padded_msg );
-      hash = transform32( blocks32bit, rounds, message.length * 8 );
-      break;
+      hash32 = transform32( blocks32bit, rounds, message.length * 8, digest_length );
+      hash = squeezeBytesInt( hash32, digest_length );
+      return hash;
     case 384:
       padded_msg = pad512( message, digest_length );
       blocks64bit = getBlocks64Word( padded_msg );
