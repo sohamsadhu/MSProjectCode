@@ -145,27 +145,68 @@ public class BLAKE
     }
   }
   
+  public int[][] getBlocks32Word( byte[] padded_msg )
+  {
+    int rows = padded_msg.length / 64;
+    int [][] blocks = new int[rows][16];
+    int k = 0;
+    ByteBuffer wrapped;
+    for( int i = 0; i < rows; i++ )
+    {
+      for( int j = 0; j < 16; j++ )
+      {
+        k = (i * 64) + (j * 4);
+        byte[] arr = {padded_msg[k], padded_msg[k + 1], padded_msg[k + 2], padded_msg[k + 3]};
+        wrapped = ByteBuffer.wrap( arr );
+        blocks[i][j] = wrapped.getInt();
+      }
+    }
+    return blocks;
+  }
+  
+  public long[][] getBlocks64Word( byte[] padded_msg )
+  {
+    int rows = padded_msg.length / 128;
+    long [][] blocks = new long[rows][16];
+    int k = 0;
+    ByteBuffer wrapped;
+    for( int i = 0; i < rows; i++ )
+    {
+      for( int j = 0; j < 16; j++ )
+      {
+        k = (i * 128) + (j * 8);
+        byte[] arr = {padded_msg[k], padded_msg[k + 1], padded_msg[k + 2], padded_msg[k + 3],
+            padded_msg[k + 4], padded_msg[k + 5], padded_msg[k + 6], padded_msg[k + 7]};
+        wrapped = ByteBuffer.wrap( arr );
+        blocks[i][j] = wrapped.getLong();
+      }
+    }
+    return blocks;
+  }
+  
   public byte[] hash( String msg, int digest_length, int rounds )
   {
     byte[] message = convertHexStringToBytes( msg );
     byte[] padded_msg;
+    int[][] blocks32bit;
+    long[][] blocks64bit;
     switch( digest_length )
     {
     case 224:
       padded_msg = pad256( message, digest_length );
+      blocks32bit = getBlocks32Word( padded_msg );
       break;
     case 256:
       padded_msg = pad256( message, digest_length );
+      blocks32bit = getBlocks32Word( padded_msg );
       break;
     case 384:
       padded_msg = pad512( message, digest_length );
+      blocks64bit = getBlocks64Word( padded_msg );
       break;
     case 512:
       padded_msg = pad512( message, digest_length );
-      System.out.println(" padded message length "+ padded_msg.length);
-      for( byte b : padded_msg ) {
-        System.out.printf("%02X", b);
-      }
+      blocks64bit = getBlocks64Word( padded_msg );
       break;
     }
     return null;
