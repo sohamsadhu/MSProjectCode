@@ -260,7 +260,54 @@ public class BLAKE
     return state;
   }
   
-  public byte[] transform64( long[][] blocks, int rounds, int msg_len )
+  public void g64( int a, int b, int c, int d, long[] state, int index, long[] msg, int round )
+  {
+    int sig1 = SIGMA[round % 10][2 * index];
+    int sig2 = SIGMA[round % 10][(2 * index) + 1];
+    state[a] = state[a] + state[b] + (msg[sig1] ^ CONST256[sig2]); //a ← a + b + (mσr (2i) ⊕ cσr (2i+1) )
+    state[d] = (state[d] ^ state[a]) >>> 16; //d ← (d ⊕ a) >>> 16
+    state[c] = state[c] + state[d]; //c ← c+d
+    state[b] = (state[b] + state[c]) >>> 12; //b ← (b ⊕ c) >>> 12
+    state[a] = state[a] + state[b] + (msg[sig2] ^ CONST256[sig1]);//a ← a + b + (mσr (2i+1) ⊕ cσr (2i) )
+    state[d] = (state[d] ^ state[a]) >>> 8; //d ← (d ⊕ a) >>> 8
+    state[c] = state[c] + state[d]; //c ← c+d
+    state[b] = (state[b] ^ state[c]) >>> 7; //b ← (b ⊕ c) >>> 7
+  }
+  
+  public long[] compress64( long[] pre_state, long[] block, long counter )
+  {
+    long [] state = new long[16];
+    state[0] = pre_state[0]; state[1] = pre_state[1]; state[2] = pre_state[2]; state[3] = pre_state[3];
+    state[4] = pre_state[4]; state[5] = pre_state[5]; state[6] = pre_state[6]; state[7] = pre_state[7];
+    // Salt is not there, no use of XOR with zero, so just assign the values.
+    state[8] = CONST512[0]; state[9] = CONST512[1]; state[10] = CONST512[2]; state[11] = CONST512[3];
+    // Our message is not above 2^32 bits, so just using int for the counter. The 1st 2 do not need it.
+    state[12] = CONST512[4]; state[13] = CONST512[5];
+    state[14] = counter ^ CONST512[6]; state[15] = counter ^ CONST512[7];
+    for( int i = 0; i < 14; i++ )
+    {
+      g64( 0, 4, 8,  12, state, 0, block, i ); //G0 (v0 , v4 , v8 , v12 )
+      g64( 1, 5, 9,  13, state, 1, block, i ); //G1 (v1 , v5 , v9 , v13 )
+      g64( 2, 6, 10, 14, state, 2, block, i ); //G2 (v2 , v6 , v10 , v14 )
+      g64( 3, 7, 11, 15, state, 3, block, i ); //G3 (v3 , v7 , v11 , v15 )
+      g64( 0, 5, 10, 15, state, 4, block, i ); //G4 (v0 , v5 , v10 , v15 )
+      g64( 1, 6, 11, 12, state, 5, block, i ); //G5 (v1 , v6 , v11 , v12 )
+      g64( 2, 7, 8,  13, state, 6, block, i ); //G6 (v2 , v7 , v8 , v13 )
+      g64( 3, 4, 9,  14, state, 7, block, i ); //G7 (v3 , v4 , v9 , v14 )
+    }
+    long[] finalised = new long[8]; // None of them are salted.
+    finalised[0] = pre_state[0] ^ state[0] ^ state[8];  // h0 ← h0 ⊕ s 0 ⊕ v0 ⊕ v8
+    finalised[1] = pre_state[1] ^ state[1] ^ state[9];  // h1 ← h1 ⊕ s 1 ⊕ v1 ⊕ v9
+    finalised[2] = pre_state[2] ^ state[2] ^ state[10]; // h2 ← h2 ⊕ s2 ⊕ v2 ⊕ v10
+    finalised[3] = pre_state[3] ^ state[3] ^ state[11]; // h3 ← h3 ⊕ s3 ⊕ v3 ⊕ v11
+    finalised[4] = pre_state[4] ^ state[4] ^ state[12]; // h4 ← h4 ⊕ s0 ⊕ v4 ⊕ v12
+    finalised[5] = pre_state[5] ^ state[5] ^ state[13]; // h5 ← h5 ⊕ s1 ⊕ v5 ⊕ v13
+    finalised[6] = pre_state[6] ^ state[6] ^ state[14]; // h6 ← h6 ⊕ s2 ⊕ v6 ⊕ v14
+    finalised[7] = pre_state[7] ^ state[7] ^ state[15]; // h7 ← h7 ⊕ s3 ⊕ v7 ⊕ v15
+    return finalised;
+  }
+  
+  public long[] transform64( long[][] blocks, int rounds, int msg_len, int digest_len )
   {
     long[] counter = new long[ blocks.length ];
     if((msg_len % 1024) > 888) 
@@ -282,7 +329,11 @@ public class BLAKE
         counter[i] = bit_counter;
       }
     }
-    return null;
+    long[] state = (384 == digest_len) ? IV384 : IV512;
+    for( int i = 0; i < blocks.length ; i++ ) {
+      state = compress64( state, blocks[i], counter[i] );
+    }
+    return state;
   }
   
   public byte[] squeezeBytesInt( int[] hashed, int digest_len )
@@ -296,6 +347,22 @@ public class BLAKE
       byte[] arr = buf.array();
       for( int j = 0; j < 4; j++ ) {
         hash[(i * 4) + j] = arr[j];
+      }
+    }
+    return hash;
+  }
+  
+  public byte[] squeezeBytesLong( long[] hashed, int digest_len )
+  {
+    int end_point = digest_len / 64;
+    byte[] hash = new byte[ digest_len ];
+    ByteBuffer buf = ByteBuffer.allocate(8);
+    for( int i = 0; i < end_point; i++ )
+    {
+      buf.putLong( hashed[i] );
+      byte[] arr = buf.array();
+      for( int j = 0; j < 8; j++ ) {
+        hash[(i * 8) + j] = arr[j];
       }
     }
     return hash;
@@ -327,13 +394,15 @@ public class BLAKE
     case 384:
       padded_msg = pad512( message, digest_length );
       blocks64bit = getBlocks64Word( padded_msg );
-      hash = transform64( blocks64bit, rounds, message.length * 8 );
-      break;
+      hash64 = transform64( blocks64bit, rounds, message.length * 8, digest_length );
+      hash = squeezeBytesLong( hash64, digest_length );
+      return hash;
     case 512:
       padded_msg = pad512( message, digest_length );
       blocks64bit = getBlocks64Word( padded_msg );
-      hash = transform64( blocks64bit, rounds, message.length * 8 );
-      break;
+      hash64 = transform64( blocks64bit, rounds, message.length * 8, digest_length );
+      hash = squeezeBytesLong( hash64, digest_length );
+      return hash;
     }
     return null;
   }
@@ -341,6 +410,10 @@ public class BLAKE
   public static void main( String[] args )
   {
     BLAKE b = new BLAKE();
-    b.hash("", 224, 0);
+    byte[] digest = b.hash("54686520717569636b2062726f776e20666f78206a756d7073206f766572207468"
+        + "65206c617a7920646f67", 512, 0);
+    for( byte d : digest ) {
+      System.out.printf("%02X", d);
+    }
   }
 }
