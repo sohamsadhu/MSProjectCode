@@ -264,14 +264,14 @@ public class BLAKE
   {
     int sig1 = SIGMA[round % 10][2 * index];
     int sig2 = SIGMA[round % 10][(2 * index) + 1];
-    state[a] = state[a] + state[b] + (msg[sig1] ^ CONST256[sig2]); //a ← a + b + (mσr (2i) ⊕ cσr (2i+1) )
+    state[a] = state[a] + state[b] + (msg[sig1] ^ CONST512[sig2]); //a ← a + b + (mσr (2i) ⊕ cσr (2i+1) )
+    state[d] = (state[d] ^ state[a]) >>> 32; // d ← (d ⊕ a) >>> 32
+    state[c] = state[c] + state[d]; //c ← c+d
+    state[b] = (state[b] + state[c]) >>> 25; //b ← (b ⊕ c) >>> 25
+    state[a] = state[a] + state[b] + (msg[sig2] ^ CONST512[sig1]);//a ← a + b + (mσr (2i+1) ⊕ cσr (2i) )
     state[d] = (state[d] ^ state[a]) >>> 16; //d ← (d ⊕ a) >>> 16
     state[c] = state[c] + state[d]; //c ← c+d
-    state[b] = (state[b] + state[c]) >>> 12; //b ← (b ⊕ c) >>> 12
-    state[a] = state[a] + state[b] + (msg[sig2] ^ CONST256[sig1]);//a ← a + b + (mσr (2i+1) ⊕ cσr (2i) )
-    state[d] = (state[d] ^ state[a]) >>> 8; //d ← (d ⊕ a) >>> 8
-    state[c] = state[c] + state[d]; //c ← c+d
-    state[b] = (state[b] ^ state[c]) >>> 7; //b ← (b ⊕ c) >>> 7
+    state[b] = (state[b] ^ state[c]) >>> 11; //b ← (b ⊕ c) >>> 11
   }
   
   public long[] compress64( long[] pre_state, long[] block, long counter )
@@ -284,7 +284,7 @@ public class BLAKE
     // Our message is not above 2^32 bits, so just using int for the counter. The 1st 2 do not need it.
     state[12] = CONST512[4]; state[13] = CONST512[5];
     state[14] = counter ^ CONST512[6]; state[15] = counter ^ CONST512[7];
-    for( int i = 0; i < 14; i++ )
+    for( int i = 0; i < 16; i++ )
     {
       g64( 0, 4, 8,  12, state, 0, block, i ); //G0 (v0 , v4 , v8 , v12 )
       g64( 1, 5, 9,  13, state, 1, block, i ); //G1 (v1 , v5 , v9 , v13 )
@@ -340,9 +340,9 @@ public class BLAKE
   {
     int end_point = digest_len / 32;
     byte[] hash = new byte[ digest_len ];
-    ByteBuffer buf = ByteBuffer.allocate(4);
     for( int i = 0; i < end_point; i++ )
     {
+      ByteBuffer buf = ByteBuffer.allocate(4);
       buf.putInt( hashed[i] );
       byte[] arr = buf.array();
       for( int j = 0; j < 4; j++ ) {
@@ -356,9 +356,9 @@ public class BLAKE
   {
     int end_point = digest_len / 64;
     byte[] hash = new byte[ digest_len ];
-    ByteBuffer buf = ByteBuffer.allocate(8);
     for( int i = 0; i < end_point; i++ )
     {
+      ByteBuffer buf = ByteBuffer.allocate(8);
       buf.putLong( hashed[i] );
       byte[] arr = buf.array();
       for( int j = 0; j < 8; j++ ) {
@@ -411,7 +411,7 @@ public class BLAKE
   {
     BLAKE b = new BLAKE();
     byte[] digest = b.hash("54686520717569636b2062726f776e20666f78206a756d7073206f766572207468"
-        + "65206c617a7920646f67", 512, 0);
+        + "65206c617a7920646f67", 256, 0);
     for( byte d : digest ) {
       System.out.printf("%02X", d);
     }
