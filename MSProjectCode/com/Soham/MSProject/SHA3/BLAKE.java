@@ -339,7 +339,7 @@ public class BLAKE
   public byte[] squeezeBytesInt( int[] hashed, int digest_len )
   {
     int end_point = digest_len / 32;
-    byte[] hash = new byte[ digest_len ];
+    byte[] hash = new byte[digest_len / 8];
     for( int i = 0; i < end_point; i++ )
     {
       ByteBuffer buf = ByteBuffer.allocate(4);
@@ -355,7 +355,7 @@ public class BLAKE
   public byte[] squeezeBytesLong( long[] hashed, int digest_len )
   {
     int end_point = digest_len / 64;
-    byte[] hash = new byte[ digest_len ];
+    byte[] hash = new byte[digest_len / 8];
     for( int i = 0; i < end_point; i++ )
     {
       ByteBuffer buf = ByteBuffer.allocate(8);
@@ -410,8 +410,7 @@ public class BLAKE
   public static void main( String[] args )
   {
     BLAKE b = new BLAKE();
-    byte[] digest = b.hash("54686520717569636b2062726f776e20666f78206a756d7073206f766572207468"
-        + "65206c617a7920646f67", 256, 0);
+    byte[] digest = b.hash("424c414b45", 224, 0);
     for( byte d : digest ) {
       System.out.printf("%02X", d);
     }
