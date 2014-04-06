@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.Soham.MSProject.SHA3.BLAKE;
 import com.Soham.MSProject.SHA3.Groestl;
 import com.Soham.MSProject.SHA3.Keccak;
 
@@ -14,12 +15,14 @@ public class SHA3Test
 {
   private static Groestl groestl;
   private static Keccak keccak;
+  private static BLAKE blake;
   
   @BeforeClass
   public static void initialise()
   {
     groestl = new Groestl();
     keccak = new Keccak();
+    blake = new BLAKE();
   }
   
   @Test
@@ -256,5 +259,49 @@ public class SHA3Test
         + "46A0C80A43C70088B6183639DCFDA4125BD113A8F49EE23ED306FAAC576C3FB0C1E256671D817FC2534A52F"
         + "5B439F72E424DE376F4C565CCA82307DD9EF76DA5B7C4EB7E085172E328807C02D011FFBF33785378D79DC"
         + "266F6A5BE6BB0E4A92ECEEBAEB1", 512, 0));    
+  }
+  
+  @Test
+  public void test224BLAKE()
+  {
+    byte[] expects = blake.convertHexStringToBytes
+        ("c8e92d7088ef87c1530aee2ad44dc720cc10589cc2ec58f95a15e51b");
+    assertArrayEquals( expects, blake.hash("54686520717569636B2062726F776E20666F78206A756D70732"
+        + "06F76657220746865206C617A7920646F67", 224, 0));
+    expects = blake.convertHexStringToBytes
+        ("cfb6848add73e1cb47994c4765df33b8f973702705a30a71fe4747a3");
+    assertArrayEquals( expects, blake.hash("424C414B45", 224, 0));
+    expects = keccak.convertHexStringToBytes
+        ("b0d0ca94a288bde157e47687f0a6675bac4858898f3ea59f35a456de");
+    assertArrayEquals( expects, blake.hash("27424C414B452077696E73205348412D332120486F6F72617921"
+        + "21212720284920686176652074696D65206D616368696E6529", 224, 0));
+    expects = keccak.convertHexStringToBytes
+        ("fe312db9138c074964b6dfe347b078bb927074b73481c4d86ecb8b54");
+    assertArrayEquals( expects, blake.hash("4C6F72656D20697073756D20646F6C6F722073697420616D6"
+        + "5742C20636F6E73656374657475722061646970697363696E6720656C69742E20446F6E65632061206"
+        + "469616D206C65637475732E205365642073697420616D657420697073756D206D61757269732E204D6"
+        + "16563656E617320636F6E6775", 224, 0));
+  }
+  
+  @Test
+  public void test256BLAKE()
+  {
+    byte[] expects = blake.convertHexStringToBytes
+        ("7576698ee9cad30173080678e5965916adbb11cb5245d386bf1ffda1cb26c9d7");
+    assertArrayEquals( expects, blake.hash("54686520717569636B2062726F776E20666F78206A756D70732"
+        + "06F76657220746865206C617A7920646F67", 256, 0));
+    expects = keccak.convertHexStringToBytes
+        ("07663e00cf96fbc136cf7b1ee099c95346ba3920893d18cc8851f22ee2e36aa6");
+    assertArrayEquals( expects, blake.hash("424C414B45", 256, 0));
+    expects = keccak.convertHexStringToBytes
+        ("18a393b4e62b1887a2edf79a5c5a5464daf5bbb976f4007bea16a73e4c1e198e");
+    assertArrayEquals( expects, blake.hash("27424C414B452077696E73205348412D332120486F6F72617921"
+        + "21212720284920686176652074696D65206D616368696E6529", 256, 0));
+    expects = keccak.convertHexStringToBytes
+        ("af95fffc7768821b1e08866a2f9f66916762bfc9d71c4acb5fd515f31fd6785a");
+    assertArrayEquals( expects, blake.hash("4C6F72656D20697073756D20646F6C6F722073697420616D6"
+        + "5742C20636F6E73656374657475722061646970697363696E6720656C69742E20446F6E65632061206"
+        + "469616D206C65637475732E205365642073697420616D657420697073756D206D61757269732E204D6"
+        + "16563656E617320636F6E6775", 256, 0));
   }
 }

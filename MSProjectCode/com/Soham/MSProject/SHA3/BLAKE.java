@@ -184,44 +184,69 @@ public class BLAKE
     return blocks;
   }
   
-  public void g32( int a, int b, int c, int d, long[] state, int index, int[] msg, int round )
+  public void g32( int a, int b, int c, int d, int[] state, int index, int[] msg, int round )
   {
+//    int sig1 = SIGMA[round % 10][2 * index];
+//    int sig2 = SIGMA[round % 10][(2 * index) + 1];
+//    long temp = (msg[sig1] ^ CONST256[sig2]) & 0xFFFFFFFFL;
+//    state[a] = (state[a] + state[b] + temp) % (1L << 32); //a ← a + b + (mσr (2i) ⊕ cσr (2i+1) )
+////    System.out.println("a "+ state[a]);
+//    temp = (state[d] ^ state[a]) & 0xFFFFFFFFL;
+//    state[d] = ((temp >>> 16) | ((temp << 16) & 0xFFFFFFFFL)) & 0xFFFFFFFFL; //d ← (d ⊕ a) >>> 16
+////    System.out.println("d "+ state[d]);
+//    state[c] = (state[c] + state[d]) % (1L << 32); //c ← c+d
+////    System.out.println("c "+ state[c]);
+//    temp = (state[b] ^ state[c]) & 0xFFFFFFFFL;
+//    state[b] = ((temp >>> 12) | (temp << 20)) & 0xFFFFFFFFL; //b ← (b ⊕ c) >>> 12
+////    System.out.println("b "+ state[b]);
+//    temp = (msg[sig2] ^ CONST256[sig1]) & 0xFFFFFFFFL;
+//    state[a] = (state[a] + state[b] + temp) % (1L << 32);//a ← a + b + (mσr (2i+1) ⊕ cσr (2i))
+//    temp = (state[d] ^ state[a]) & 0xFFFFFFFFL;
+//    state[d] = ((temp >>> 8) | (temp << 24)) & 0xFFFFFFFFL; //d ← (d ⊕ a) >>> 8
+//    state[c] = (state[c] + state[d]) % (1L << 32); //c ← c+d
+//    temp = (state[b] ^ state[c]) & 0xFFFFFFFFL;
+//    state[b] = ((temp >>> 7) | (temp << 25)) & 0xFFFFFFFFL; //b ← (b ⊕ c) >>> 7
+    
     int sig1 = SIGMA[round % 10][2 * index];
     int sig2 = SIGMA[round % 10][(2 * index) + 1];
-    long temp = (msg[sig1] ^ CONST256[sig2]) & 0xFFFFFFFFL;
-    state[a] = (state[a] + state[b] + temp) % (1L << 32); //a ← a + b + (mσr (2i) ⊕ cσr (2i+1) )
+    int temp;
+    state[a] = state[a] + state[b] + (msg[sig1] ^ CONST256[sig2]); //a ← a + b + (mσr (2i) ⊕ cσr (2i+1) )
 //    System.out.println("a "+ state[a]);
-    temp = (state[d] ^ state[a]) & 0xFFFFFFFFL;
-    state[d] = ((temp >>> 16) | ((temp << 16) & 0xFFFFFFFFL)) & 0xFFFFFFFFL; //d ← (d ⊕ a) >>> 16
+    temp = state[d] ^ state[a];
+    state[d] = (temp >>> 16) | (temp << 16); //d ← (d ⊕ a) >>> 16
 //    System.out.println("d "+ state[d]);
-    state[c] = (state[c] + state[d]) % (1L << 32); //c ← c+d
+    state[c] = state[c] + state[d]; //c ← c+d
 //    System.out.println("c "+ state[c]);
-    temp = (state[b] ^ state[c]) & 0xFFFFFFFFL;
-    state[b] = ((temp >>> 12) | (temp << 20)) & 0xFFFFFFFFL; //b ← (b ⊕ c) >>> 12
+    temp = state[b] ^ state[c];
+    state[b] = (temp >>> 12) | (temp << 20); //b ← (b ⊕ c) >>> 12
 //    System.out.println("b "+ state[b]);
-    temp = (msg[sig2] ^ CONST256[sig1]) & 0xFFFFFFFFL;
-    state[a] = (state[a] + state[b] + temp) % (1L << 32);//a ← a + b + (mσr (2i+1) ⊕ cσr (2i))
-    temp = (state[d] ^ state[a]) & 0xFFFFFFFFL;
-    state[d] = ((temp >>> 8) | (temp << 24)) & 0xFFFFFFFFL; //d ← (d ⊕ a) >>> 8
-    state[c] = (state[c] + state[d]) % (1L << 32); //c ← c+d
-    temp = (state[b] ^ state[c]) & 0xFFFFFFFFL;
-    state[b] = ((temp >>> 7) | (temp << 25)) & 0xFFFFFFFFL; //b ← (b ⊕ c) >>> 7
+    state[a] = state[a] + state[b] + (msg[sig2] ^ CONST256[sig1]);//a ← a + b + (mσr (2i+1) ⊕ cσr (2i))
+    temp = state[d] ^ state[a];
+    state[d] = (temp >>> 8) | (temp << 24); //d ← (d ⊕ a) >>> 8
+    state[c] = state[c] + state[d]; //c ← c+d
+    temp = state[b] ^ state[c];
+    state[b] = (temp >>> 7) | (temp << 25); //b ← (b ⊕ c) >>> 7
   }
   
-  public int[] compress32( int[] pre_state, int[] block, int counter )
+  public int[] compress32( int[] pre_state, int[] block, int counter, int rounds )
   {
-    long [] state = new long[16];
-    state[0] = pre_state[0] & 0xFFFFFFFFL;    state[1] = pre_state[1] & 0xFFFFFFFFL;
-    state[2] = pre_state[2] & 0xFFFFFFFFL;    state[3] = pre_state[3] & 0xFFFFFFFFL;
-    state[4] = pre_state[4] & 0xFFFFFFFFL;    state[5] = pre_state[5] & 0xFFFFFFFFL;
-    state[6] = pre_state[6] & 0xFFFFFFFFL;    state[7] = pre_state[7] & 0xFFFFFFFFL;
+    int [] state = new int[16];
+//    state[0] = pre_state[0] & 0xFFFFFFFFL;    state[1] = pre_state[1] & 0xFFFFFFFFL;
+//    state[2] = pre_state[2] & 0xFFFFFFFFL;    state[3] = pre_state[3] & 0xFFFFFFFFL;
+//    state[4] = pre_state[4] & 0xFFFFFFFFL;    state[5] = pre_state[5] & 0xFFFFFFFFL;
+//    state[6] = pre_state[6] & 0xFFFFFFFFL;    state[7] = pre_state[7] & 0xFFFFFFFFL;
+    state[0] = pre_state[0]; state[1] = pre_state[1]; state[2] = pre_state[2]; state[3] = pre_state[3];
+    state[4] = pre_state[4]; state[5] = pre_state[5]; state[6] = pre_state[6]; state[7] = pre_state[7];
     // Salt is not there, no use of XOR with zero, so just assign the values.
-    state[8] = CONST256[0] & 0xFFFFFFFFL;    state[9] = CONST256[1] & 0xFFFFFFFFL;
-    state[10] = CONST256[2] & 0xFFFFFFFFL;   state[11] = CONST256[3] & 0xFFFFFFFFL;
+//    state[8] = CONST256[0] & 0xFFFFFFFFL;    state[9] = CONST256[1] & 0xFFFFFFFFL;
+//    state[10] = CONST256[2] & 0xFFFFFFFFL;   state[11] = CONST256[3] & 0xFFFFFFFFL;
+    state[8] = CONST256[0]; state[9] = CONST256[1]; state[10] = CONST256[2]; state[11] = CONST256[3];
     // Our message is not above 2^32 bits, so just using int for the counter. The 1st 2 do not need it.
-    state[12] = (counter ^ CONST256[4]) & 0xFFFFFFFFL; 
-    state[13] = (counter ^ CONST256[5]) & 0xFFFFFFFFL;
-    state[14] = CONST256[6] & 0xFFFFFFFFL; state[15] = CONST256[7] & 0xFFFFFFFFL;
+//    state[12] = (counter ^ CONST256[4]) & 0xFFFFFFFFL; 
+//    state[13] = (counter ^ CONST256[5]) & 0xFFFFFFFFL;
+//    state[14] = CONST256[6] & 0xFFFFFFFFL; state[15] = CONST256[7] & 0xFFFFFFFFL;
+    state[12] = counter ^ CONST256[4]; state[13] = counter ^ CONST256[5];
+    state[14] = CONST256[6]; state[15] = CONST256[7]; 
     System.out.println("Message blocks");
     for( int i = 0; i < 4; i++ ) 
     {
@@ -238,7 +263,7 @@ public class BLAKE
       }
       System.out.println("");
     }
-    for( int i = 0; i < 14; i++ )
+    for( int i = 0; i < rounds; i++ )
     {
       g32( 0, 4, 8, 12, state, 0, block, i ); //G0 (v0 , v4 , v8 , v12 )
 //      System.out.println("g0");
@@ -313,22 +338,22 @@ public class BLAKE
 //        System.out.println("");
 //      }
     }
-    long[] temp_state = new long[8]; // None of them are salted.
+    int[] finalised = new int[8]; // None of them are salted.
     for( int i = 0; i < 8; i++ ) {
-      temp_state[i] = pre_state[i] ^ state[i] ^ state[i + 8];
+      finalised[i] = pre_state[i] ^ state[i] ^ state[i + 8];
     }
     System.out.println("State after finalization");
     for( int j = 0; j < 2; j++ ) 
     {
       for( int k = 0 ; k < 4; k++ ) {
-        System.out.printf("%d ", temp_state[(j * 4) + k]);
+        System.out.printf("%d ", finalised[(j * 4) + k]);
       }
       System.out.println("");
     }
-    int[] finalised = new int[8];
-    for( int i = 0; i < 8; i++ ) {
-      finalised[i] = ( int )temp_state[i];
-    }
+//    int[] finalised = new int[8];
+//    for( int i = 0; i < 8; i++ ) {
+//      finalised[i] = ( int )temp_state[i];
+//    }
     return finalised;
   }
   
@@ -355,8 +380,9 @@ public class BLAKE
       }
     }
     int[] state = (224 == digest_len) ? IV224 : IV256;
+    rounds = (0 == rounds) ? 14 : rounds;
     for( int i = 0; i < blocks.length ; i++ ) {
-      state = compress32( state, blocks[i], counter[i] );
+      state = compress32( state, blocks[i], counter[i], rounds );
     }
     return state;
   }
@@ -506,7 +532,7 @@ public class BLAKE
   public static void main( String[] args )
   {
     BLAKE b = new BLAKE();
-    byte[] digest = b.hash("424c414b45", 256, 0);
+    byte[] digest = b.hash("424c414b45", 224, 0);
     for( byte d : digest ) {
       System.out.printf("%02X", d);
     }
