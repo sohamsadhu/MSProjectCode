@@ -191,17 +191,17 @@ public class BLAKE
     int temp;
     // a ← a + b + (mσr (2i) ⊕ cσr (2i+1) )
     state[a] = state[a] + state[b] + (msg[sig1] ^ CONST256[sig2]); 
-    temp = state[d] ^ state[a];
+    temp     = state[d] ^ state[a];
     state[d] = (temp >>> 16) | (temp << 16);                 // d ← (d ⊕ a) >>> 16
     state[c] = state[c] + state[d];                          // c ← c+d
-    temp = state[b] ^ state[c];
+    temp     = state[b] ^ state[c];
     state[b] = (temp >>> 12) | (temp << 20);                 // b ← (b ⊕ c) >>> 12
     // a ← a + b + (mσr (2i+1) ⊕ cσr (2i))
     state[a] = state[a] + state[b] + (msg[sig2] ^ CONST256[sig1]);
     temp = state[d] ^ state[a];
     state[d] = (temp >>> 8) | (temp << 24);                  // d ← (d ⊕ a) >>> 8
     state[c] = state[c] + state[d];                          // c ← c+d
-    temp = state[b] ^ state[c];
+    temp     = state[b] ^ state[c];
     state[b] = (temp >>> 7) | (temp << 25);                  // b ← (b ⊕ c) >>> 7
   }
   
@@ -213,21 +213,21 @@ public class BLAKE
     state[4] = pre_state[4]; state[5] = pre_state[5]; 
     state[6] = pre_state[6]; state[7] = pre_state[7];
     // Salt is not there, no use of XOR with zero, so just assign the values.
-    state[8] = CONST256[0];  state[9] = CONST256[1]; 
-    state[10] = CONST256[2]; state[11] = CONST256[3];
+    state[8]  = CONST256[0];  state[9]  = CONST256[1]; 
+    state[10] = CONST256[2];  state[11] = CONST256[3];
     // Our message is not above 2^32 bits, use int for the counter. The last 2 do not need counter.
-    state[12] = counter ^ CONST256[4]; state[13] = counter ^ CONST256[5];
+    state[12] = CONST256[4] ^ counter; state[13] = CONST256[5] ^ counter;
     state[14] = CONST256[6];           state[15] = CONST256[7];
     for( int i = 0; i < rounds; i++ )
     {
-      g32( 0, 4, 8,  12, state, 0, block, i ); //G0 (v0 , v4 , v8 , v12 )
-      g32( 1, 5, 9,  13, state, 1, block, i ); //G1 (v1 , v5 , v9 , v13 )
-      g32( 2, 6, 10, 14, state, 2, block, i ); //G2 (v2 , v6 , v10 , v14 )
-      g32( 3, 7, 11, 15, state, 3, block, i ); //G3 (v3 , v7 , v11 , v15 )
-      g32( 0, 5, 10, 15, state, 4, block, i ); //G4 (v0 , v5 , v10 , v15 )
-      g32( 1, 6, 11, 12, state, 5, block, i ); //G5 (v1 , v6 , v11 , v12 )
-      g32( 2, 7, 8,  13, state, 6, block, i ); //G6 (v2 , v7 , v8 , v13 )
-      g32( 3, 4, 9,  14, state, 7, block, i ); //G7 (v3 , v4 , v9 , v14 )
+      g32( 0, 4, 8,  12, state, 0, block, i );  //G0 (v0 , v4 , v8  , v12 )
+      g32( 1, 5, 9,  13, state, 1, block, i );  //G1 (v1 , v5 , v9  , v13 )
+      g32( 2, 6, 10, 14, state, 2, block, i );  //G2 (v2 , v6 , v10 , v14 )
+      g32( 3, 7, 11, 15, state, 3, block, i );  //G3 (v3 , v7 , v11 , v15 )
+      g32( 0, 5, 10, 15, state, 4, block, i );  //G4 (v0 , v5 , v10 , v15 )
+      g32( 1, 6, 11, 12, state, 5, block, i );  //G5 (v1 , v6 , v11 , v12 )
+      g32( 2, 7, 8,  13, state, 6, block, i );  //G6 (v2 , v7 , v8  , v13 )
+      g32( 3, 4, 9,  14, state, 7, block, i );  //G7 (v3 , v4 , v9  , v14 )
     }
     int[] finalised = new int[8]; // None of them are salted.
     for( int i = 0; i < 8; i++ ) {
@@ -270,36 +270,46 @@ public class BLAKE
   {
     int sig1 = SIGMA[round % 10][2 * index];
     int sig2 = SIGMA[round % 10][(2 * index) + 1];
-    state[a] = state[a] + state[b] + (msg[sig1] ^ CONST512[sig2]); //a ← a + b + (mσr (2i) ⊕ cσr (2i+1) )
-    state[d] = (state[d] ^ state[a]) >>> 32; // d ← (d ⊕ a) >>> 32
-    state[c] = state[c] + state[d]; //c ← c+d
-    state[b] = (state[b] + state[c]) >>> 25; //b ← (b ⊕ c) >>> 25
-    state[a] = state[a] + state[b] + (msg[sig2] ^ CONST512[sig1]);//a ← a + b + (mσr (2i+1) ⊕ cσr (2i) )
-    state[d] = (state[d] ^ state[a]) >>> 16; //d ← (d ⊕ a) >>> 16
-    state[c] = state[c] + state[d]; //c ← c+d
-    state[b] = (state[b] ^ state[c]) >>> 11; //b ← (b ⊕ c) >>> 11
+    long temp;
+    // a ← a + b + (mσr (2i) ⊕ cσr (2i+1))
+    state[a] = state[a] + state[b] + (msg[sig1] ^ CONST512[sig2]);
+    temp     = state[d] ^ state[a];
+    state[d] = (temp >>> 32) | (temp << 32);                   // d ← (d ⊕ a) >>> 32
+    state[c] = state[c] + state[d];                            // c ← c+d
+    temp     = state[b] ^ state[c];
+    state[b] = (temp >>> 25) | (temp << 39);                   // b ← (b ⊕ c) >>> 25
+    //a ← a + b + (mσr (2i+1) ⊕ cσr (2i) )
+    state[a] = state[a] + state[b] + (msg[sig2] ^ CONST512[sig1]);
+    temp     = state[d] ^ state[a];
+    state[d] = (temp >>> 16) | (temp << 48);                   // d ← (d ⊕ a) >>> 16
+    state[c] = state[c] + state[d];                            // c ← c+d
+    temp     = state[b] ^ state[c];
+    state[b] = (temp >>> 11) | (temp << 53);                   // b ← (b ⊕ c) >>> 11
   }
   
   public long[] compress64( long[] pre_state, long[] block, long counter )
   {
     long [] state = new long[16];
-    state[0] = pre_state[0]; state[1] = pre_state[1]; state[2] = pre_state[2]; state[3] = pre_state[3];
-    state[4] = pre_state[4]; state[5] = pre_state[5]; state[6] = pre_state[6]; state[7] = pre_state[7];
+    state[0] = pre_state[0]; state[1] = pre_state[1]; 
+    state[2] = pre_state[2]; state[3] = pre_state[3];
+    state[4] = pre_state[4]; state[5] = pre_state[5]; 
+    state[6] = pre_state[6]; state[7] = pre_state[7];
     // Salt is not there, no use of XOR with zero, so just assign the values.
-    state[8] = CONST512[0]; state[9] = CONST512[1]; state[10] = CONST512[2]; state[11] = CONST512[3];
-    // Our message is not above 2^32 bits, so just using int for the counter. The 1st 2 do not need it.
-    state[12] = CONST512[4]; state[13] = CONST512[5];
-    state[14] = counter ^ CONST512[6]; state[15] = counter ^ CONST512[7];
+    state[8]  = CONST512[0]; state[9]  = CONST512[1]; 
+    state[10] = CONST512[2]; state[11] = CONST512[3];
+    // Our message is not above 2^32 bits, so just use long for counter. The last 2 do not need it.
+    state[12] = CONST512[4] ^ counter; state[13] = CONST512[5] ^ counter;
+    state[14] = CONST512[6];           state[15] = CONST512[7];
     for( int i = 0; i < 16; i++ )
     {
-      g64( 0, 4, 8,  12, state, 0, block, i ); //G0 (v0 , v4 , v8 , v12 )
-      g64( 1, 5, 9,  13, state, 1, block, i ); //G1 (v1 , v5 , v9 , v13 )
-      g64( 2, 6, 10, 14, state, 2, block, i ); //G2 (v2 , v6 , v10 , v14 )
-      g64( 3, 7, 11, 15, state, 3, block, i ); //G3 (v3 , v7 , v11 , v15 )
-      g64( 4, 5, 10, 15, state, 4, block, i ); //G4 (v0 , v5 , v10 , v15 )
-      g64( 5, 6, 11, 12, state, 5, block, i ); //G5 (v1 , v6 , v11 , v12 )
-      g64( 6, 7, 8,  13, state, 6, block, i ); //G6 (v2 , v7 , v8 , v13 )
-      g64( 7, 4, 9,  14, state, 7, block, i ); //G7 (v3 , v4 , v9 , v14 )
+      g64( 0, 4, 8,  12, state, 0, block, i );  //G0 (v0 , v4 , v8  , v12 )
+      g64( 1, 5, 9,  13, state, 1, block, i );  //G1 (v1 , v5 , v9  , v13 )
+      g64( 2, 6, 10, 14, state, 2, block, i );  //G2 (v2 , v6 , v10 , v14 )
+      g64( 3, 7, 11, 15, state, 3, block, i );  //G3 (v3 , v7 , v11 , v15 )
+      g64( 4, 5, 10, 15, state, 4, block, i );  //G4 (v0 , v5 , v10 , v15 )
+      g64( 5, 6, 11, 12, state, 5, block, i );  //G5 (v1 , v6 , v11 , v12 )
+      g64( 6, 7, 8,  13, state, 6, block, i );  //G6 (v2 , v7 , v8  , v13 )
+      g64( 7, 4, 9,  14, state, 7, block, i );  //G7 (v3 , v4 , v9  , v14 )
     }
     long[] finalised = new long[8]; // None of them are salted.
     for( int i = 0; i < 8; i++ ) {
@@ -374,9 +384,9 @@ public class BLAKE
     byte [] message = convertHexStringToBytes( msg );
     byte [] padded_msg;
     byte [] hash;
-    int [] hash32;
+    int  [] hash32;
     long [] hash64;
-    int [][] blocks32bit;
+    int  [][] blocks32bit;
     long [][] blocks64bit;
     switch( digest_length )
     {
@@ -411,7 +421,7 @@ public class BLAKE
   public static void main( String[] args )
   {
     BLAKE b = new BLAKE();
-    byte[] digest = b.hash("424c414b45", 224, 0);
+    byte[] digest = b.hash("424c414b45", 512, 0);
     for( byte d : digest ) {
       System.out.printf("%02X", d);
     }
