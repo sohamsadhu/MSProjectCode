@@ -287,7 +287,7 @@ public class BLAKE
     state[b] = (temp >>> 11) | (temp << 53);                   // b ← (b ⊕ c) >>> 11
   }
   
-  public long[] compress64( long[] pre_state, long[] block, long counter )
+  public long[] compress64( long[] pre_state, long[] block, long counter, int rounds )
   {
     long [] state = new long[16];
     state[0] = pre_state[0]; state[1] = pre_state[1]; 
@@ -300,16 +300,16 @@ public class BLAKE
     // Our message is not above 2^32 bits, so just use long for counter. The last 2 do not need it.
     state[12] = CONST512[4] ^ counter; state[13] = CONST512[5] ^ counter;
     state[14] = CONST512[6];           state[15] = CONST512[7];
-    for( int i = 0; i < 16; i++ )
+    for( int i = 0; i < rounds; i++ )
     {
       g64( 0, 4, 8,  12, state, 0, block, i );  //G0 (v0 , v4 , v8  , v12 )
       g64( 1, 5, 9,  13, state, 1, block, i );  //G1 (v1 , v5 , v9  , v13 )
       g64( 2, 6, 10, 14, state, 2, block, i );  //G2 (v2 , v6 , v10 , v14 )
       g64( 3, 7, 11, 15, state, 3, block, i );  //G3 (v3 , v7 , v11 , v15 )
-      g64( 4, 5, 10, 15, state, 4, block, i );  //G4 (v0 , v5 , v10 , v15 )
-      g64( 5, 6, 11, 12, state, 5, block, i );  //G5 (v1 , v6 , v11 , v12 )
-      g64( 6, 7, 8,  13, state, 6, block, i );  //G6 (v2 , v7 , v8  , v13 )
-      g64( 7, 4, 9,  14, state, 7, block, i );  //G7 (v3 , v4 , v9  , v14 )
+      g64( 0, 5, 10, 15, state, 4, block, i );  //G4 (v0 , v5 , v10 , v15 )
+      g64( 1, 6, 11, 12, state, 5, block, i );  //G5 (v1 , v6 , v11 , v12 )
+      g64( 2, 7, 8,  13, state, 6, block, i );  //G6 (v2 , v7 , v8  , v13 )
+      g64( 3, 4, 9,  14, state, 7, block, i );  //G7 (v3 , v4 , v9  , v14 )
     }
     long[] finalised = new long[8]; // None of them are salted.
     for( int i = 0; i < 8; i++ ) {
@@ -320,6 +320,7 @@ public class BLAKE
   
   public long[] transform64( long[][] blocks, int rounds, int msg_len, int digest_len )
   {
+    rounds = (0 == rounds) ? 16 : rounds;
     long[] counter = new long[ blocks.length ];
     if((msg_len % 1024) > 888) 
     {
@@ -342,7 +343,7 @@ public class BLAKE
     }
     long[] state = (384 == digest_len) ? IV384 : IV512;
     for( int i = 0; i < blocks.length ; i++ ) {
-      state = compress64( state, blocks[i], counter[i] );
+      state = compress64( state, blocks[i], counter[i], rounds );
     }
     return state;
   }
@@ -421,7 +422,8 @@ public class BLAKE
   public static void main( String[] args )
   {
     BLAKE b = new BLAKE();
-    byte[] digest = b.hash("424c414b45", 512, 0);
+    byte[] digest = b.hash("54686520717569636B2062726F776E20666F78206A756D7073206F76657220746"
+        + "865206C617A7920646F67", 512, 0);
     for( byte d : digest ) {
       System.out.printf("%02X", d);
     }
