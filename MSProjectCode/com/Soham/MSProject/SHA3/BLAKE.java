@@ -60,6 +60,15 @@ public class BLAKE
     return message;
   }
   
+  /**
+   * In the case when more than one byte needs to be padded.
+   * @param pad_msg
+   * @param msg_len
+   * @param digest_len
+   * @param bit_len This is the 32 or the 64 bit representation of l bits, in the message.
+   * @param msg
+   * @return
+   */
   public byte[] padHelper2( byte[] pad_msg, int msg_len, int digest_len, byte[] bit_len,
       byte[] msg )
   {
@@ -79,6 +88,13 @@ public class BLAKE
     return pad_msg;
   }
   
+  /**
+   * Handle the special case in padding of just one more byte to be added for padding.
+   * @param message
+   * @param bit_len the number of bits in the message.
+   * @param digest_length
+   * @return
+   */
   public byte[] padHelper1( byte[] message, byte[] bit_len, int digest_length )
   {
     int pad_len = ((224 == digest_length) || (256 == digest_length)) ? 9 : 17;
@@ -94,6 +110,12 @@ public class BLAKE
     return pad_msg;
   }
   
+  /**
+   * Handle the padding for 224 and 256 digest length. The message bit length is long format.
+   * @param message
+   * @param digest_length
+   * @return
+   */
   public byte[] pad256( byte[] message, int digest_length )
   {
     if( !((224 == digest_length) || (256 == digest_length))) { return null; }
@@ -117,6 +139,13 @@ public class BLAKE
     }
   }
   
+  /**
+   * Pad for digest length of 384 and 512. The message bit len is kept in long since the message
+   * format is hardly going to cross the threshold of 2 ^ 64.
+   * @param message
+   * @param digest_length
+   * @return
+   */
   public byte[] pad512( byte[] message, int digest_length )
   {
     if( !((384 == digest_length) || (512 == digest_length)) ){ return null; }
@@ -145,6 +174,11 @@ public class BLAKE
     }
   }
   
+  /**
+   * Convert the bytes in message to 4 word block of int for processing in the matrix.
+   * @param padded_msg
+   * @return
+   */
   public int[][] getBlocks32Word( byte[] padded_msg )
   {
     int rows = padded_msg.length / 64;
@@ -164,6 +198,11 @@ public class BLAKE
     return blocks;
   }
   
+  /**
+   * Convert the bytes to long form for input to the state.
+   * @param padded_msg
+   * @return
+   */
   public long[][] getBlocks64Word( byte[] padded_msg )
   {
     int rows = padded_msg.length / 128;
@@ -184,6 +223,17 @@ public class BLAKE
     return blocks;
   }
   
+  /**
+   * The G function for the digest lengths of 224 and 256.
+   * @param a v0
+   * @param b v1
+   * @param c v2
+   * @param d v3
+   * @param state that has previous hash, counters, and salt.
+   * @param index G_i that is the ith representation.
+   * @param msg the int[16] block containing message.
+   * @param round the iteration of the compression.
+   */
   public void g32( int a, int b, int c, int d, int[] state, int index, int[] msg, int round )
   {
     int sig1 = SIGMA[round % 10][2 * index];
@@ -205,6 +255,16 @@ public class BLAKE
     state[b] = (temp >>> 7) | (temp << 25);                  // b ← (b ⊕ c) >>> 7
   }
   
+  /**
+   * Sets up the message for compression and stiches together the hashes. The counter here is 
+   * only operated with 12, 13 position in state since the message is not going to be 64 bits.
+   * There is no salt so no XOR with zeros.
+   * @param pre_state the initial value for respective digest lengths.
+   * @param block The message broken into blocks.
+   * @param counter The number of bits in the message.
+   * @param rounds The rounds for compression.
+   * @return int[16] state from which to extract hash
+   */
   public int[] compress32( int[] pre_state, int[] block, int counter, int rounds )
   {
     int [] state = new int[16];
@@ -236,6 +296,14 @@ public class BLAKE
     return finalised;
   }
   
+  /**
+   * Set up the counter and call compression on all message blocks.
+   * @param blocks
+   * @param rounds
+   * @param msg_len
+   * @param digest_len
+   * @return int[16] from which hash to be squeezed.
+   */
   public int[] transform32( int[][] blocks, int rounds, int msg_len, int digest_len )
   {
     int[] counter = new int[ blocks.length ]; // You will need as many counters as many blocks.
@@ -266,6 +334,17 @@ public class BLAKE
     return state;
   }
   
+  /**
+   * The G function for the digest lengths of 384 and 512. The state is being updated by reference.
+   * @param a v0
+   * @param b v1
+   * @param c v2
+   * @param d v3
+   * @param state that has previous hash, counters, and salt.
+   * @param index G_i that is the ith representation.
+   * @param msg the long[16] block containing message.
+   * @param round the iteration of the compression.
+   */
   public void g64( int a, int b, int c, int d, long[] state, int index, long[] msg, int round )
   {
     int sig1 = SIGMA[round % 10][2 * index];
@@ -287,6 +366,16 @@ public class BLAKE
     state[b] = (temp >>> 11) | (temp << 53);                   // b ← (b ⊕ c) >>> 11
   }
   
+  /**
+   * Sets up the message for compression and stiches together the hashes. The counter here is 
+   * only operated with 12, 13 position in state since the message is not going to be 128 bits.
+   * There is no salt so no XOR with zeros.
+   * @param pre_state the initial value for respective digest lengths.
+   * @param block The message broken into blocks.
+   * @param counter the number of bits in the message.
+   * @param rounds the rounds for compression.
+   * @return long[16] state from which to extract hash
+   */
   public long[] compress64( long[] pre_state, long[] block, long counter, int rounds )
   {
     long [] state = new long[16];
@@ -318,6 +407,14 @@ public class BLAKE
     return finalised;
   }
   
+  /**
+   * Set up the counters and call the compression on each of the message blocks.
+   * @param blocks
+   * @param rounds
+   * @param msg_len
+   * @param digest_len
+   * @return long[16] form which to squeeze bytes for final hash.
+   */
   public long[] transform64( long[][] blocks, int rounds, int msg_len, int digest_len )
   {
     rounds = (0 == rounds) ? 16 : rounds;
@@ -348,6 +445,12 @@ public class BLAKE
     return state;
   }
   
+  /**
+   * Get the bytes from int array for the final hash digest.
+   * @param hashed
+   * @param digest_len
+   * @return byte[digest_len / 8] the hash
+   */
   public byte[] squeezeBytesInt( int[] hashed, int digest_len )
   {
     int end_point = digest_len / 32;
@@ -364,6 +467,12 @@ public class BLAKE
     return hash;
   }
   
+  /**
+   * Squeeze byte from long[16] for the hash digest.
+   * @param hashed
+   * @param digest_len
+   * @return byte[digest_len / 8]
+   */
   public byte[] squeezeBytesLong( long[] hashed, int digest_len )
   {
     int end_point = digest_len / 64;
@@ -380,6 +489,14 @@ public class BLAKE
     return hash;
   }
   
+  /**
+   * Hash a message based on the digest lengths and the number of compression rounds. Compression
+   * rounds will be normal if supplied with zero else they will compress the number provided.
+   * @param msg
+   * @param digest_length
+   * @param rounds
+   * @return
+   */
   public byte[] hash( String msg, int digest_length, int rounds )
   {
     byte [] message = convertHexStringToBytes( msg );
