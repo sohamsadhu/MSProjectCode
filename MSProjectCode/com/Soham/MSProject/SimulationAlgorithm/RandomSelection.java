@@ -1,5 +1,5 @@
 package com.Soham.MSProject.SimulationAlgorithm;
 
-public interface RandomSelection {
-
+public class RandomSelection
+{
 }
