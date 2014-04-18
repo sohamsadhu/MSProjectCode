@@ -8,7 +8,10 @@ package com.Soham.MSProject.SimulationAlgorithm;
 // Each of these algorithm will have 4 digest sizes consisting of 224, 256, 384, 512.
 // Each of the digest size will have 3 SHA-3 finalist algorithm folder.
 // Each of the finalist algorithm folder will have 3 rounds folder to them.
-// Each round folder will have 20 text files.
+// Each round will have another 3 folder for start, middle and end. And each folder
+// will have 20 files in them. So 51,840 files of data for me to handle.
+// So the file will consist of number of success, number of failures, 
+// average iteration for failure, success, and average iteration.
 public class HillClimbing 
 {
 }
