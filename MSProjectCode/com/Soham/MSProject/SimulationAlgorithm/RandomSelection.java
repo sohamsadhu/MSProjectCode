@@ -1,5 +1,5 @@
 package com.Soham.MSProject.SimulationAlgorithm;
 
-public class RandomSelection
+public class RandomSelection implements FindCollision
 {
 }

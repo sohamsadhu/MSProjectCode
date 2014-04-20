@@ -102,12 +102,12 @@ public class DoTest {
     btnStartEvaluation.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseDoubleClick(MouseEvent arg0) {
-        String cv = comboCV.getText();
+        String cv          = comboCV.getText();
         String m_collision = combo_find_collision.getText();
-        String diglen = combo_digest_length.getText();
-        String sha3 = combo_sha3.getText();
-        String rounds = combo_num_rounds.getText();
-        String flipend = combo_flip_end.getText();
+        String diglen      = combo_digest_length.getText();
+        String sha3        = combo_sha3.getText();
+        String rounds      = combo_num_rounds.getText();
+        String flipend     = combo_flip_end.getText();
         com.Soham.MSProject.SimulationAlgorithm.Experiment exp = 
             new com.Soham.MSProject.SimulationAlgorithm.Experiment();
         exp.startExperiment(cv, m_collision, diglen, sha3, rounds, flipend);

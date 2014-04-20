@@ -2,7 +2,7 @@ package com.Soham.MSProject.SHA3;
 
 import java.nio.ByteBuffer;
 
-public class BLAKE 
+public class BLAKE implements Hash
 {
   public static final int[] IV224 = { 0xC1059ED8, 0x367CD507, 0x3070DD17, 0xF70E5939, 0xFFC00B31,
     0x68581511, 0x64F98FA7, 0xBEFA4FA4 };

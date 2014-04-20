@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * 224, 256, 384 and 512 as per the NIST specification. Any other digest lengths are not supported.
  * @author Soham Sadhu
  */
-public class Keccak 
+public class Keccak implements Hash
 {  
   /* The L after each of the long type needs to be there, else the Java compiler thinks that 
    * leading zeros are absent, with the sign bit set. This leads to weird results. Look here
