@@ -2,6 +2,7 @@ package com.Soham.MSProject.SimulationAlgorithm;
 
 import java.nio.ByteBuffer;
 
+import com.Soham.MSProject.SHA3.Hash;
 import com.Soham.MSProject.SHA3.Keccak;
 
 // Design of to be experiment.
@@ -39,14 +40,30 @@ public class HillClimbing implements FindCollision
   {
     long num_success = 0;
     long num_failure = 0;
-    double avg_iteration_success = 0;
-    double avg_iteration_failure = 0;
     long sum_iteration_success = 0L;
     long sum_iteration_failure = 0L;
+    double avg_iteration_success = 0;
+    double avg_iteration_failure = 0;    
   }
   
-  public void hillClimbing()
-  {}
+  public int getBest( Hash sha3, String msg1, String msg2, String cv, String rounds, 
+      String digest_length )
+  {
+    msg1 += cv;     // Append the initial chaining value to both the message.
+    msg2 += cv;
+    byte[] hash1 = sha3.hash(msg1, Integer.parseInt(digest_length), Integer.parseInt(rounds));
+    byte[] hash2 = sha3.hash(msg2, Integer.parseInt(digest_length), Integer.parseInt(rounds));
+    for( int i = 0; i < hash1.length; i++ ) {
+      hash1[i] ^= hash2[i];
+    }
+    return (getHW( hash1 ));
+  }
+  
+  public void hillClimbing( Hash sha3, String msg1, String msg2, String cv, String rounds,
+      String digest_length )
+  {
+    int best = getBest( sha3, msg1, msg2, cv, rounds, digest_length );
+  }
   
   public static void main( String[] args )
   {
