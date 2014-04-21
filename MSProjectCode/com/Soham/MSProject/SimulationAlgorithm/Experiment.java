@@ -9,6 +9,16 @@ import com.Soham.MSProject.SHA3.Groestl;
 import com.Soham.MSProject.SHA3.Hash;
 import com.Soham.MSProject.SHA3.Keccak;
 
+// Where or what this class has to write. 
+// First level hierarchy would be the main Output folder.
+// Then the chaining values 32, 64, 128, 256, 512, 1024.
+// Next folder would be hill climb, simulated annealing, taboo search, random selection.
+// Each attack on digest size of folder 224, 256, 384, 512.
+// Each digest size has 3 SHA3 finalist folder BLAKE, Keccak, Groestl
+// Each SHA3 will have 3 rounds of folder 1, 2, 3
+// Each folder will have 20 files with 1.txt, 2.txt ... that will have
+// So the file will consist of number of success, number of failures, 
+// average iteration for failure, success, and average iteration.
 public class Experiment 
 {
   public String getChainValue( String cv_length )
@@ -76,8 +86,7 @@ public class Experiment
       String rounds, String flipend, String msg1, String msg2 )
   {
     // What this thing needs to write in the output file? Four things
-    // 1.number of success 2.number of failure 3.average iter success 4.avg iteration failure.
-    
+    // 1.number of success 2.number of failure 3.average iter success 4.avg iteration failure.    
   }
   
   public void startExperiment( String cv, String m_collision, String diglen, String sha3,
