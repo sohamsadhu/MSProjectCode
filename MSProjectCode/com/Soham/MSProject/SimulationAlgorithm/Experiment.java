@@ -20,18 +20,12 @@ import com.Soham.MSProject.SHA3.Keccak;
 // So the file will consist of number of success, number of failures, 
 // average iteration for failure, success, and average iteration.
 public class Experiment 
-{
-  public String getChainValue( String cv_length )
-  {
-    int cvlen = Integer.parseInt(cv_length);
-    cvlen = cvlen / 4; // Make the chaining value equal to the number of 0 to pad as string.
-    StringBuilder cv = new StringBuilder("");
-    for( int i = 0; i < cvlen; i++ ) {
-      cv.append('0');
-    }
-    return (cv.toString());
-  }
-  
+{  
+  /**
+   * By default the hash function returned is that of Keccak.
+   * @param hash_name any one of the 3 SHA-3 finalist string name.
+   * @return the object of the hash function.
+   */
   public Hash getSHA3( String hash_name )
   {
     switch( hash_name )
@@ -43,6 +37,11 @@ public class Experiment
     }
   }
   
+  /**
+   * Return the collision fetching algorithm object. By default return random search.
+   * @param collision the class name of the collision you are looking for.
+   * @return the object of the implemented algorithm.
+   */
   public FindCollision getCollision( String collision )
   {
     switch( collision )
@@ -55,6 +54,12 @@ public class Experiment
     }
   }
   
+  /**
+   * Return the message pair in the file name in the respective flipped folder.
+   * @param flipend the folder where the file should be.
+   * @param file_name
+   * @return array with two strings.
+   */
   public String[] getMessages( String flipend, int file_name )
   {
     File    file = null;
@@ -86,25 +91,24 @@ public class Experiment
       String rounds, String flipend, String msg1, String msg2 )
   {
     // What this thing needs to write in the output file? Four things
-    // 1.number of success 2.number of failure 3.average iter success 4.avg iteration failure.    
+    // 1.number of success 2.number of failure 3.average iter success 4.avg iteration failure.
   }
   
   public void startExperiment( String cv, String m_collision, String diglen, String sha3,
       String rounds, String flipend )
   {
-    String        CV   = getChainValue( cv );
     FindCollision fc   = getCollision( m_collision );
     Hash          hash = getSHA3( sha3 );
     for( int i = 1; i < 21; i++ )
     {
       String[] msgpairs = getMessages( flipend, i );
-      getCollisions( CV, fc, hash, diglen, rounds, flipend, msgpairs[0], msgpairs[1] );
+      getCollisions( cv, fc, hash, diglen, rounds, flipend, msgpairs[0], msgpairs[1] );
     }
   }
   
   public static void main(String [] args)
   {
     Experiment e = new Experiment();
-    System.out.println(e.getChainValue("512").length());
+    System.out.println(e.getSHA3("BLAKE").getClass().getName());
   }
 }
