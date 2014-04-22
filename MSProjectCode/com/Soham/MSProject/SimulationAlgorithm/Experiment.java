@@ -1,6 +1,8 @@
 package com.Soham.MSProject.SimulationAlgorithm;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -9,16 +11,6 @@ import com.Soham.MSProject.SHA3.Groestl;
 import com.Soham.MSProject.SHA3.Hash;
 import com.Soham.MSProject.SHA3.Keccak;
 
-// Where or what this class has to write. 
-// First level hierarchy would be the main Output folder.
-// Then the chaining values 32, 64, 128, 256, 512, 1024.
-// Next folder would be hill climb, simulated annealing, taboo search, random selection.
-// Each attack on digest size of folder 224, 256, 384, 512.
-// Each digest size has 3 SHA3 finalist folder BLAKE, Keccak, Groestl
-// Each SHA3 will have 3 rounds of folder 1, 2, 3
-// Each folder will have 20 files with 1.txt, 2.txt ... that will have
-// So the file will consist of number of success, number of failures, 
-// average iteration for failure, success, and average iteration.
 public class Experiment 
 {  
   /**
@@ -87,13 +79,60 @@ public class Experiment
     return (new String[]{msg1, msg2});
   }
   
+  /**
+   * Based on the parameters it will create the file in ./Output/cv/collision algorithm/
+   * digest length/SHA-3/rounds/flipped end/input file.txt. There are 6 things written to this
+   * file separated by : on each line. They are number of success from 128 tries, the number of
+   * iterations for success, and average iterations for success. And similar 3 values for failure.
+   * @param cv
+   * @param fc
+   * @param sha3
+   * @param digest_len
+   * @param rounds the number of rounds that the given SHA-3 algorithm would run to produce hash. 
+   * @param flipend
+   * @param ip_file the input file name in int, from the input folder flipped end.
+   * @param msg1 the first of the two message which differs from the second by only a bit.
+   * @param msg2
+   */
   public void getCollisions( String cv, FindCollision fc, Hash sha3, String digest_len,
-      String rounds, String flipend, String msg1, String msg2 )
+      String rounds, String flipend, int ip_file, String msg1, String msg2 )
   {
-    // What this thing needs to write in the output file? Four things
-    // 1.number of success 2.number of failure 3.average iter success 4.avg iteration failure.
+    String collision_folder = fc.getClass().getName()
+        .substring(fc.getClass().getName().lastIndexOf('.') + 1);
+    String sha3_folder = sha3.getClass().getName().substring
+        (sha3.getClass().getName().lastIndexOf('.') + 1);
+    File f = new File("./Output/"+ cv +"/"+ collision_folder +"/"+ digest_len +"/"+ sha3_folder +
+        "/"+ rounds +"/"+ flipend +"/"+ ip_file +".txt");
+    f.getParentFile().mkdirs();
+    try 
+    {
+      BufferedWriter bw = new BufferedWriter(new FileWriter(f.getAbsoluteFile()));
+      long[] results = fc.startIterativeCollision(sha3, msg1, msg2, cv, rounds, digest_len);
+      bw.write("Success:"+ results[0]); bw.newLine();
+      bw.write("Total number of success iteration:"+ results[1]); bw.newLine();
+      double avg_success_iter = (results[1] * 1.0) / results[0];
+      bw.write("Average number of success iteration:"+ avg_success_iter); bw.newLine();
+      bw.write("Success:"+ results[2]); bw.newLine();
+      bw.write("Total number of success iteration:"+ results[3]); bw.newLine();
+      double avg_fail_iter = (results[3] * 1.0) / results[2];
+      bw.write("Average number of success iteration:"+ avg_fail_iter);
+      bw.close();
+    } 
+    catch (IOException e) {
+      e.printStackTrace();
+    }
   }
   
+  /**
+   * Go through each of the input folders and provide with the file name and the input string
+   * messages to work with to the function that calls experiment and write them in result folder.
+   * @param cv
+   * @param m_collision
+   * @param diglen
+   * @param sha3
+   * @param rounds
+   * @param flipend
+   */
   public void startExperiment( String cv, String m_collision, String diglen, String sha3,
       String rounds, String flipend )
   {
@@ -102,13 +141,45 @@ public class Experiment
     for( int i = 1; i < 21; i++ )
     {
       String[] msgpairs = getMessages( flipend, i );
-      getCollisions( cv, fc, hash, diglen, rounds, flipend, msgpairs[0], msgpairs[1] );
+      getCollisions( cv, fc, hash, diglen, rounds, flipend, i, msgpairs[0], msgpairs[1] );
+    }
+  }
+  
+  // A helper method to loop over the different experiment variables and start the experiment.
+  public void loopExperimentVariables()
+  {
+    String[] cv         = new String[]{"32", "64", "128", "256", "512", "1024"};
+    String[] fc         = new String[]{"Hill Climbing", "Simulated Annealing", "Taboo Search", 
+                                       "Random Search"};
+    String[] sha3       = new String[]{"BLAKE", "Groestl", "Keccak"};
+    String[] digest_len = new String[]{"224", "256", "384", "512"};
+    String[] rounds     = new String[]{"1", "2", "3"};
+    String[] flipend    = new String[]{"Start", "Middle", "End"};
+    // Ugly bow shaped loop, coming up!
+    for( String chain_value : cv ) {
+      for( String find_collision : fc ) {
+        for( String hash_method : sha3 ) {
+          for( String digest_length : digest_len ) {
+            for( String round : rounds ) {
+              for( String flip_folder : flipend ) {
+                startExperiment(chain_value, find_collision, digest_length, hash_method, 
+                    round, flip_folder);
+              }
+            }
+          }
+        }
+      }
     }
   }
   
   public static void main(String [] args)
   {
     Experiment e = new Experiment();
-    System.out.println(e.getSHA3("BLAKE").getClass().getName());
+    String str = e.getSHA3("BLAKE").getClass().getName();
+    str = str.substring(str.lastIndexOf('.') + 1);
+//    for( String s : str ) {
+//      System.out.println( s );
+//    }
+    System.out.println( str );
   }
 }
