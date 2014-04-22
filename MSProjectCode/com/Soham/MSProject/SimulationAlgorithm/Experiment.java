@@ -104,18 +104,19 @@ public class Experiment
     File f = new File("./Output/"+ cv +"/"+ collision_folder +"/"+ digest_len +"/"+ sha3_folder +
         "/"+ rounds +"/"+ flipend +"/"+ ip_file +".txt");
     f.getParentFile().mkdirs();
-    try 
+    double avg_success_iter, avg_fail_iter;
+    try
     {
       BufferedWriter bw = new BufferedWriter(new FileWriter(f.getAbsoluteFile()));
       long[] results = fc.startIterativeCollision(sha3, msg1, msg2, cv, rounds, digest_len);
       bw.write("Success:"+ results[0]); bw.newLine();
-      bw.write("Total number of success iteration:"+ results[1]); bw.newLine();
-      double avg_success_iter = (results[1] * 1.0) / results[0];
-      bw.write("Average number of success iteration:"+ avg_success_iter); bw.newLine();
-      bw.write("Success:"+ results[2]); bw.newLine();
-      bw.write("Total number of success iteration:"+ results[3]); bw.newLine();
-      double avg_fail_iter = (results[3] * 1.0) / results[2];
-      bw.write("Average number of success iteration:"+ avg_fail_iter);
+      bw.write("Total number of success iterations:"+ results[1]); bw.newLine();
+      avg_success_iter = (0 != results[0]) ? ((results[1] * 1.0) / results[0]) : 0.0;
+      bw.write("Average number of success iterations:"+ avg_success_iter); bw.newLine();
+      bw.write("Failure:"+ results[2]); bw.newLine();
+      bw.write("Total number of failure iterations:"+ results[3]); bw.newLine();
+      avg_fail_iter = (0 != results[2]) ? ((results[3] * 1.0) / results[2]) : 0.0;
+      bw.write("Average number of failed iterations:"+ avg_fail_iter);
       bw.close();
     } 
     catch (IOException e) {
@@ -138,11 +139,13 @@ public class Experiment
   {
     FindCollision fc   = getCollision( m_collision );
     Hash          hash = getSHA3( sha3 );
+    System.out.println("Start experiment.");
     for( int i = 1; i < 21; i++ )
     {
       String[] msgpairs = getMessages( flipend, i );
       getCollisions( cv, fc, hash, diglen, rounds, flipend, i, msgpairs[0], msgpairs[1] );
     }
+    System.out.println("End experiment.");
   }
   
   // A helper method to loop over the different experiment variables and start the experiment.
