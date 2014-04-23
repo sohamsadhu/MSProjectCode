@@ -119,7 +119,6 @@ public class FindCollisionImpl implements FindCollision
         }
         temp2[j / 8] ^= neighbour_transform[j % 8];
         neighbour_index++;
-        //System.out.println("neighbour index "+ neighbour_index);
         for( int k = 0; k < cvlen; k++ ) {
           neighbours[neighbour_index][k] = temp2[k];
         }

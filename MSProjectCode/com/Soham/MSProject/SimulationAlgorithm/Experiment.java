@@ -82,8 +82,9 @@ public class Experiment
   /**
    * Based on the parameters it will create the file in ./Output/cv/collision algorithm/
    * digest length/SHA-3/rounds/flipped end/input file.txt. There are 6 things written to this
-   * file separated by : on each line. They are number of success from 128 tries, the number of
-   * iterations for success, and average iterations for success. And similar 3 values for failure.
+   * file separated by : on each line. They are number of success from 256 tries, the number of
+   * iterations for success, and average iterations for success. Similar 2 values for failure,
+   * and lastly total iterations and average iterations.
    * @param cv
    * @param fc
    * @param sha3
@@ -104,7 +105,8 @@ public class Experiment
     File f = new File("./Output/"+ cv +"/"+ collision_folder +"/"+ digest_len +"/"+ sha3_folder +
         "/"+ rounds +"/"+ flipend +"/"+ ip_file +".txt");
     f.getParentFile().mkdirs();
-    double avg_success_iter, avg_fail_iter;
+    double avg_success_iter, avg_fail_iter, avg_iter;
+    long total_iter;
     try
     {
       BufferedWriter bw = new BufferedWriter(new FileWriter(f.getAbsoluteFile()));
@@ -116,7 +118,11 @@ public class Experiment
       bw.write("Failure:"+ results[2]); bw.newLine();
       bw.write("Total number of failure iterations:"+ results[3]); bw.newLine();
       avg_fail_iter = (0 != results[2]) ? ((results[3] * 1.0) / results[2]) : 0.0;
-      bw.write("Average number of failed iterations:"+ avg_fail_iter);
+      bw.write("Average number of failed iterations:"+ avg_fail_iter); bw.newLine();
+      total_iter = results[1] + results[3];
+      bw.write("Total iterations:"+ total_iter); bw.newLine();
+      avg_iter = (total_iter * 1.0) / (results[0] + results[2]);
+      bw.write("Average iterations:"+ avg_iter);
       bw.close();
     } 
     catch (IOException e) {
@@ -139,13 +145,11 @@ public class Experiment
   {
     FindCollision fc   = getCollision( m_collision );
     Hash          hash = getSHA3( sha3 );
-    System.out.println("Start experiment.");
     for( int i = 1; i < 21; i++ )
     {
       String[] msgpairs = getMessages( flipend, i );
       getCollisions( cv, fc, hash, diglen, rounds, flipend, i, msgpairs[0], msgpairs[1] );
     }
-    System.out.println("End experiment.");
   }
   
   // A helper method to loop over the different experiment variables and start the experiment.
@@ -156,7 +160,7 @@ public class Experiment
                                        "Random Search"};
     String[] sha3       = new String[]{"BLAKE", "Groestl", "Keccak"};
     String[] digest_len = new String[]{"224", "256", "384", "512"};
-    String[] rounds     = new String[]{"1", "2", "3"};
+    String[] rounds     = new String[]{"1", "2", "3", "4"};
     String[] flipend    = new String[]{"Start", "Middle", "End"};
     // Ugly bow shaped loop, coming up!
     for( String chain_value : cv ) {
@@ -177,12 +181,9 @@ public class Experiment
   
   public static void main(String [] args)
   {
-    Experiment e = new Experiment();
-    String str = e.getSHA3("BLAKE").getClass().getName();
-    str = str.substring(str.lastIndexOf('.') + 1);
-//    for( String s : str ) {
-//      System.out.println( s );
-//    }
-    System.out.println( str );
+//    Experiment e = new Experiment();
+//    e.getCollisions("32", new HillClimbing(), new BLAKE(), "512", "1", "Start", 1, 
+//        "54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f67",
+//        "d4686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f67");
   }
 }

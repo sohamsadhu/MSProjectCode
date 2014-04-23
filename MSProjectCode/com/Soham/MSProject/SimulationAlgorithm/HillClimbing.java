@@ -7,7 +7,7 @@ import com.Soham.MSProject.SHA3.Hash;
 public class HillClimbing extends FindCollisionImpl
 {  
   /**
-   * Iterates the search algorithm 128 times with different chaining values.
+   * Iterates the search algorithm 256 times with different chaining values.
    * @param sha3
    * @param msg1
    * @param msg2
@@ -25,7 +25,7 @@ public class HillClimbing extends FindCollisionImpl
     long sum_iteration_success = 0L;
     long sum_iteration_failure = 0L;
     String chain_value;
-    for( int i = 0; i < 128; i++ )  // Experiment with 128 different random chaining values.
+    for( int i = 0; i < 256; i++ )  // Experiment with 128 different random chaining values.
     {
       chain_value = getChainValue( cv );    // For each experiment get a new chaining value.
       long[] results = hillClimbing(sha3, msg1, msg2, chain_value, rounds, digest_length);
@@ -89,20 +89,5 @@ public class HillClimbing extends FindCollisionImpl
     // If Hamming weight, best; is less than equal to set 65% colliding bits then success as 1.
     long success = (best <= getEpsilon( Integer.parseInt(digest_length) )) ? 1L : 0L;
     return (new long[]{ success, iteration });
-  }
-  
-  public static void main( String[] args )
-  {
-    HillClimbing hc = new HillClimbing();
-    byte[][] neighbours = hc.getNeighbours(new byte[]{ 0x01, 0x01 });
-    System.out.println(" length "+ neighbours.length);
-    for( byte[] neighbour : neighbours )
-    {
-      System.out.printf("new byte[]{");
-      for( byte b : neighbour ) {
-        System.out.printf("(byte)0x%02X, ", b);
-      }
-      System.out.printf("}, ");
-    }
   }
 }
