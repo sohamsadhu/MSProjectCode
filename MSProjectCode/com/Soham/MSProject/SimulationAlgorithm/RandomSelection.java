@@ -2,7 +2,10 @@ package com.Soham.MSProject.SimulationAlgorithm;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 import java.util.Scanner;
+
+import org.apache.commons.codec.binary.Hex;
 
 import com.Soham.MSProject.SHA3.Hash;
 
@@ -114,8 +117,24 @@ public class RandomSelection extends FindCollisionImpl
   public long[] randomSelect( Hash sha3, String msg1, String msg2, String cv, String rounds,
       String digest_length )
   {
-    // Random search will be fished based on the average data.
+    // Random search will go for trials, based on average trials from each of other methods.
     long trials = getTrials( sha3, digest_length, rounds, cv );
-    return null;
+    long trial_counter = 0;
+    Random random = new Random();
+    int best = getEvaluation( sha3, msg1, msg2, cv, rounds, digest_length );
+    byte[][] neighbours = getNeighbours( hexStringToByteArray( cv ));
+    while( trial_counter < trials )
+    {
+      String chain_value = Hex.encodeHexString( neighbours[random.nextInt( neighbours.length )] );
+      if(( getEvaluation( sha3, msg1, msg2, chain_value, rounds, digest_length ))  < best )
+      {
+        best = getEvaluation( sha3, msg1, msg2, chain_value, rounds, digest_length );
+        cv   = chain_value;
+        neighbours = getNeighbours( hexStringToByteArray( cv ));
+      }
+      trial_counter++;
+    }
+    long success = (best <= getEpsilon( Integer.parseInt(digest_length) )) ? 1L : 0L;
+    return (new long[]{ success, trials });
   }
 }
