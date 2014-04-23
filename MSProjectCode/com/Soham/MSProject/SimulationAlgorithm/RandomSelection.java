@@ -1,195 +1,67 @@
 package com.Soham.MSProject.SimulationAlgorithm;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Scanner;
+
 import com.Soham.MSProject.SHA3.Hash;
 
 public class RandomSelection extends FindCollisionImpl
-{  
-  public long getTrialsBLAKE224( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsGroestl224( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsKeccak224( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsBLAKE256( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsGroestl256( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsKeccak256( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsBLAKE384( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsGroestl384( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsKeccak384( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsBLAKE512( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsGroestl512( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrialsKeccak512( String rounds, String cv )
-  {
-    switch( rounds )
-    {
-    case "1": return 0;
-    case "2": return 0;
-    case "3": return 0;
-    default:  return 0;
-    }
-  }
-  
-  public long getTrials224( Hash sha3, String rounds, String cv )
-  {
-    switch( sha3.getClass().getName() )
-    {
-    case "com.Soham.MSProject.SHA3.BLAKE":   return getTrialsBLAKE224( rounds, cv );
-    case "com.Soham.MSProject.SHA3.Groestl": return getTrialsGroestl224( rounds, cv );
-    case "com.Soham.MSProject.SHA3.Keccak":  return getTrialsKeccak224( rounds, cv );
-    default: return 0;
-    }
-  }
-  
-  public long getTrials256( Hash sha3, String rounds, String cv )
-  {
-    switch( sha3.getClass().getName() )
-    {
-    case "com.Soham.MSProject.SHA3.BLAKE":   return getTrialsBLAKE256( rounds, cv );
-    case "com.Soham.MSProject.SHA3.Groestl": return getTrialsGroestl256( rounds, cv );
-    case "com.Soham.MSProject.SHA3.Keccak":  return getTrialsKeccak256( rounds, cv );
-    default: return 0;
-    }
-  }
-  
-  public long getTrials384( Hash sha3, String rounds, String cv )
-  {
-    switch( sha3.getClass().getName() )
-    {
-    case "com.Soham.MSProject.SHA3.BLAKE":   return getTrialsBLAKE384( rounds, cv );
-    case "com.Soham.MSProject.SHA3.Groestl": return getTrialsGroestl384( rounds, cv );
-    case "com.Soham.MSProject.SHA3.Keccak":  return getTrialsKeccak384( rounds, cv );
-    default: return 0;
-    }
-  }
-  
-  public long getTrials512( Hash sha3, String rounds, String cv )
-  {
-    switch( sha3.getClass().getName() )
-    {
-    case "com.Soham.MSProject.SHA3.BLAKE":   return getTrialsBLAKE512( rounds, cv );
-    case "com.Soham.MSProject.SHA3.Groestl": return getTrialsGroestl512( rounds, cv );
-    case "com.Soham.MSProject.SHA3.Keccak":  return getTrialsKeccak512( rounds, cv );
-    default: return 0;
-    }
-  }
-  
+{
+  /**
+   * Calculates the average time taken, for particular chaining value length, SHA-3, digest 
+   * length, and given rounds for all input files as evaluated by the rest of the collision
+   * finding methods.
+   * @param sha3
+   * @param digest_len
+   * @param rounds
+   * @param cv
+   * @return
+   */
   public long getTrials( Hash sha3, String digest_len, String rounds, String cv )
   {
-    switch( digest_len )
+    File    file = null;
+    Scanner scan = null;
+    String[] collision_methods = new String[]{"HillClimbing", "SimulatedAnnealing", "TabooSearch"};
+    String hash_method = sha3.getClass().getName().substring
+        (sha3.getClass().getName().lastIndexOf('.') + 1);
+    String path_template = new String("./Output/%s/"+ digest_len +"/"+ hash_method +"/"+ rounds);
+    double sum_iters = 0;
+    for( String collision : collision_methods )
     {
-    case "224": return getTrials224( sha3, rounds, cv );
-    case "256": return getTrials256( sha3, rounds, cv );
-    case "384": return getTrials384( sha3, rounds, cv );
-    case "512": return getTrials512( sha3, rounds, cv );
-    default: return 0;
+      String path = String.format(path_template, collision);
+      String[] parts;
+      for( int i = 1; i < 21; i++ )
+      {
+        String file_path = path + "/" + i +".txt";
+        String line_avg_iter = null;
+        try
+        {
+          file = new File( file_path );
+          scan = new Scanner( file );
+          int line_counter = 1;
+          while( scan.hasNextLine() )
+          {
+            if( 6 == line_counter ) {
+              line_avg_iter = scan.nextLine();  // Get the 6th total average iterations.
+            } else {
+              scan.nextLine();      // Just empty scan the file.
+            }            
+            line_counter++;
+          }
+          scan.close();
+        }
+        catch( IOException ioex ) {
+          ioex.printStackTrace();
+        }
+        parts = line_avg_iter.split(":");
+        double iters = Double.parseDouble( parts[1] );  // Extract total 
+        sum_iters += iters;
+      }
     }
+    // There are 20 files for 3 of the collision method, so average is out of 60.
+    long average_iterations = (long)( sum_iters / 60 );
+    return (average_iterations);
   }
   
   /**
