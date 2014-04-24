@@ -129,8 +129,7 @@ public class RandomSelection extends FindCollisionImpl
       if(( getEvaluation( sha3, msg1, msg2, chain_value, rounds, digest_length ))  < best )
       {
         best = getEvaluation( sha3, msg1, msg2, chain_value, rounds, digest_length );
-        cv   = chain_value;
-        neighbours = getNeighbours( hexStringToByteArray( cv ));
+        neighbours = getNeighbours( hexStringToByteArray( chain_value ));
       }
       trial_counter++;
     }
