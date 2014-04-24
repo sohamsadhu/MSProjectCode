@@ -1,5 +1,9 @@
 package com.Soham.MSProject.SimulationAlgorithm;
 
+import java.util.Random;
+
+import org.apache.commons.codec.binary.Hex;
+
 import com.Soham.MSProject.SHA3.Hash;
 
 public class SimulatedAnnealing extends FindCollisionImpl
@@ -42,7 +46,9 @@ public class SimulatedAnnealing extends FindCollisionImpl
   }
   
   /**
-   * The algorithm that does the simulated annealing to find the near collisions.
+   * The algorithm that does the simulated annealing to find the near collisions. Reference taken
+   * from http://www.theprojectspot.com/tutorial-post/simulated-annealing-algorithm-for-beginners/6
+   * by Lee Jacobson
    * @param sha3 the algorithm used for hashing.
    * @param msg1 first of the message from message pairs
    * @param msg2
@@ -54,6 +60,33 @@ public class SimulatedAnnealing extends FindCollisionImpl
   public long[] simulatedAnnealing( Hash sha3, String msg1, String msg2, String cv, String rounds,
       String digest_length )
   {
-    return null;
+    int best = 0;
+    int delta = 0;
+    byte[][] neighbours;
+    String next = null;
+    long iteration = 0L;
+    double temperature = 20000;     // Initial temperature with the cooling rate guarantees 20,000
+    double cooling_rate = 0.001;    // iterations. Should experiment with rate for better fit.
+    double probability;
+    Random random = new Random();
+    while( temperature > 0 )
+    {
+      best = getEvaluation( sha3, msg1, msg2, cv, rounds, digest_length );
+      neighbours = getNeighbours( hexStringToByteArray( cv ));
+      temperature *= (1 - cooling_rate);
+      iteration++;
+      next = Hex.encodeHexString( neighbours[random.nextInt( neighbours.length )] );
+      delta = best - getEvaluation( sha3, msg1, msg2, next, rounds, digest_length );
+      // If the difference is positive then next value had better collision and smaller number.
+      // Choose that one as your next chaining value.
+      if( delta > 0 ) { cv = next; } 
+      else 
+      {
+        probability = Math.pow(Math.E, (delta / temperature));
+        if( probability > random.nextDouble() ) { cv = next; }
+      }
+    }
+    long success = (best <= getEpsilon( Integer.parseInt(digest_length) )) ? 1L : 0L;
+    return (new long[]{ success, iteration });
   }
 }
