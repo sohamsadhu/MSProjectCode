@@ -65,15 +65,15 @@ public class SimulatedAnnealing extends FindCollisionImpl
     byte[][] neighbours;
     String next = null;
     long iteration = 0L;
-    double temperature = 20000;     // Initial temperature with the cooling rate guarantees 20,000
-    double cooling_rate = 0.001;    // iterations. Should experiment with rate for better fit.
+    double temperature = Math.pow((cv.length() * 8), 2);  // Make the temperature as square of bit length
+    double cooling_rate = 1;    // of chaining value which is roughly twice of neighbourhood size.
     double probability;
     Random random = new Random();
     while( temperature > 0 )
     {
       best = getEvaluation( sha3, msg1, msg2, cv, rounds, digest_length );
       neighbours = getNeighbours( hexStringToByteArray( cv ));
-      temperature *= (1 - cooling_rate);
+      temperature = temperature - cooling_rate; // Just a simple decrement.
       iteration++;
       next = Hex.encodeHexString( neighbours[random.nextInt( neighbours.length )] );
       delta = best - getEvaluation( sha3, msg1, msg2, next, rounds, digest_length );

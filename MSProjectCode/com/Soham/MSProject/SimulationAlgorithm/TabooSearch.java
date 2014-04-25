@@ -54,6 +54,9 @@ public class TabooSearch extends FindCollisionImpl
   public long[] tabooSearch( Hash sha3, String msg1, String msg2, String cv, String rounds,
       String digest_length )
   {
-    return null;
+    int best = 0;
+    long iteration = 0;
+    long success = (best <= getEpsilon( Integer.parseInt(digest_length) )) ? 1L : 0L;
+    return (new long[]{ success, iteration });
   }
 }
