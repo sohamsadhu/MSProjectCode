@@ -1,5 +1,13 @@
 package com.Soham.MSProject.SimulationAlgorithm;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.codec.binary.Hex;
+
 import com.Soham.MSProject.SHA3.Hash;
 
 public class TabooSearch extends FindCollisionImpl
@@ -54,8 +62,52 @@ public class TabooSearch extends FindCollisionImpl
   public long[] tabooSearch( Hash sha3, String msg1, String msg2, String cv, String rounds,
       String digest_length )
   {
-    int best = 0;
+    int best = getEvaluation( sha3, msg1, msg2, cv, rounds, digest_length );
     long iteration = 0;
+    String best_candidate = null;
+    int length = cv.length() * 8;
+    List<byte[]> candidate_list;
+    Set<byte[]> tabu_list = new LinkedHashSet<byte[]>(length);
+    boolean continue_search = true;
+    while( continue_search )
+    {
+      continue_search = false;
+      candidate_list = new ArrayList<byte[]>( length + (length * (length - 1)) / 2 );
+      byte[][] neighbours = getNeighbours( hexStringToByteArray( cv ));
+      for( byte[] neighbour : neighbours )
+      {
+        if( !tabu_list.contains( neighbour )) {
+          candidate_list.add( neighbour );
+        }
+        iteration++;    // Note the iterations for tabu candidate list operation.
+      }
+      int minval = Integer.parseInt(digest_length) * 8;
+      int tempminval;
+      for( byte[] candidate : candidate_list )
+      {
+        tempminval = getEvaluation( sha3, msg1, msg2, Hex.encodeHexString(candidate), 
+            rounds, digest_length );
+        if( tempminval < minval )   // Find the best candidate.
+        {
+          minval = tempminval;
+          best_candidate = Hex.encodeHexString(candidate);
+        }
+        iteration++;
+      }
+      if( minval < best )
+      {
+        continue_search = true;
+        cv = best_candidate;
+        tabu_list.add( hexStringToByteArray( cv ));
+        Iterator<byte[]> li = tabu_list.iterator();
+        iteration++;
+        while((tabu_list.size() > length) && li.hasNext()) 
+        {
+          li.remove();
+          iteration++;
+        }
+      }
+    }
     long success = (best <= getEpsilon( Integer.parseInt(digest_length) )) ? 1L : 0L;
     return (new long[]{ success, iteration });
   }
