@@ -65,7 +65,7 @@ public class TabooSearch extends FindCollisionImpl
     int best = getEvaluation( sha3, msg1, msg2, cv, rounds, digest_length );
     long iteration = 0;
     String best_candidate = null;
-    int length = cv.length() * 8;
+    int length = cv.length() * 4;   // Chaining value is in hexadecimal string format.
     List<byte[]> candidate_list;
     Set<byte[]> tabu_list = new LinkedHashSet<byte[]>(length);
     boolean continue_search = true;
@@ -81,7 +81,7 @@ public class TabooSearch extends FindCollisionImpl
         }
         iteration++;    // Note the iterations for tabu candidate list operation.
       }
-      int minval = Integer.parseInt(digest_length) * 8;
+      int minval = Integer.parseInt(digest_length); // Maximum hamming distance would be digest length.
       int tempminval;
       for( byte[] candidate : candidate_list )
       {
