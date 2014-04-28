@@ -27,7 +27,7 @@ public class SimulatedAnnealing extends FindCollisionImpl
     long sum_iteration_success = 0L;
     long sum_iteration_failure = 0L;
     String chain_value;
-    for( int i = 0; i < 256; i++ )  // Experiment with 128 different random chaining values.
+    for( int i = 0; i < 128; i++ )  // Experiment with 128 different random chaining values.
     {
       chain_value = getChainValue( cv );    // For each experiment get a new chaining value.
       long[] results = simulatedAnnealing(sha3, msg1, msg2, chain_value, rounds, digest_length);
@@ -62,28 +62,35 @@ public class SimulatedAnnealing extends FindCollisionImpl
   {
     int best = 0;
     int delta = 0;
-    byte[][] neighbours;
+    byte[][] neighbours = getNeighbours( hexStringToByteArray( cv ));
     String next = null;
     long iteration = 0L;
-    double temperature = Math.pow((cv.length() * 8), 2);  // Make the temperature as square of bit length
+    double temperature = Math.pow((cv.length() * 4), 2);  // Make the temperature as square of bit length
     double cooling_rate = 1;    // of chaining value which is roughly twice of neighbourhood size.
     double probability;
     Random random = new Random();
     while( temperature > 0 )
     {
-      best = getEvaluation( sha3, msg1, msg2, cv, rounds, digest_length );
-      neighbours = getNeighbours( hexStringToByteArray( cv ));
+      best = getEvaluation( sha3, msg1, msg2, cv, rounds, digest_length );      
       temperature = temperature - cooling_rate; // Just a simple decrement.
       iteration++;
       next = Hex.encodeHexString( neighbours[random.nextInt( neighbours.length )] );
       delta = best - getEvaluation( sha3, msg1, msg2, next, rounds, digest_length );
       // If the difference is positive then next value had better collision and smaller number.
       // Choose that one as your next chaining value.
-      if( delta > 0 ) { cv = next; } 
+      if( delta > 0 ) 
+      { 
+        cv = next;
+        neighbours = getNeighbours( hexStringToByteArray( next ));
+      } 
       else 
       {
         probability = Math.pow(Math.E, (delta / temperature));
-        if( probability > random.nextDouble() ) { cv = next; }
+        if( probability > random.nextDouble() ) 
+        { 
+          cv = next;
+          neighbours = getNeighbours( hexStringToByteArray( next ));
+        }
       }
     }
     long success = (best <= getEpsilon( Integer.parseInt(digest_length) )) ? 1L : 0L;

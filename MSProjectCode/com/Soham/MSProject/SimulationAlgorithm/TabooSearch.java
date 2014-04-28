@@ -31,7 +31,7 @@ public class TabooSearch extends FindCollisionImpl
     long sum_iteration_success = 0L;
     long sum_iteration_failure = 0L;
     String chain_value;
-    for( int i = 0; i < 256; i++ )  // Experiment with 128 different random chaining values.
+    for( int i = 0; i < 128; i++ )  // Experiment with 128 different random chaining values.
     {
       chain_value = getChainValue( cv );    // For each experiment get a new chaining value.
       long[] results = tabooSearch(sha3, msg1, msg2, chain_value, rounds, digest_length);
@@ -68,10 +68,13 @@ public class TabooSearch extends FindCollisionImpl
     int length = cv.length() * 4;   // Chaining value is in hexadecimal string format.
     List<byte[]> candidate_list;
     Set<byte[]> tabu_list = new LinkedHashSet<byte[]>(length);
+    long trials = length * 10;  // Since tabu search takes steepest ascent.
+    long num_trials = 0;        // So limit the tabu search to specific number of trials.
     boolean continue_search = true;
-    while( continue_search )
+    while( continue_search  && (num_trials < trials))
     {
       continue_search = false;
+      num_trials++;
       candidate_list = new ArrayList<byte[]>( length + (length * (length - 1)) / 2 );
       byte[][] neighbours = getNeighbours( hexStringToByteArray( cv ));
       for( byte[] neighbour : neighbours )
@@ -92,19 +95,19 @@ public class TabooSearch extends FindCollisionImpl
           minval = tempminval;
           best_candidate = Hex.encodeHexString(candidate);
         }
-        iteration++;
+        iteration++;    // Increment the operation for search the best. Kind of steep ascent. 
       }
       if( minval < best )
       {
         continue_search = true;
         cv = best_candidate;
         tabu_list.add( hexStringToByteArray( cv ));
-        Iterator<byte[]> li = tabu_list.iterator();
-        iteration++;
-        while((tabu_list.size() > length) && li.hasNext()) 
+        for( Iterator<byte[]> li = tabu_list.iterator(); li.hasNext() 
+            && (tabu_list.size() > length);  )
         {
+          li.next();
           li.remove();
-          iteration++;
+          iteration++;  // increment the operation for removal.
         }
       }
     }

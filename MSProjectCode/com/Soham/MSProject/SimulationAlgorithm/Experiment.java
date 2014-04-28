@@ -145,22 +145,24 @@ public class Experiment
   {
     FindCollision fc   = getCollision( m_collision );
     Hash          hash = getSHA3( sha3 );
+    System.out.println("Start experiment.");
     for( int i = 1; i < 21; i++ )
     {
       String[] msgpairs = getMessages( flipend, i );
       getCollisions( cv, fc, hash, diglen, rounds, flipend, i, msgpairs[0], msgpairs[1] );
     }
+    System.out.println("End experiment.");
   }
   
   // A helper method to loop over the different experiment variables and start the experiment.
   public void loopExperimentVariables()
   {
-    String[] cv         = new String[]{"32", "64", "128", "256", "512", "1024"};
+    String[] cv         = new String[]{"32", "64", "128", "256", "512"};
     String[] fc         = new String[]{"Hill Climbing", "Simulated Annealing", "Taboo Search", 
                                        "Random Search"};
     String[] sha3       = new String[]{"BLAKE", "Groestl", "Keccak"};
     String[] digest_len = new String[]{"224", "256", "384", "512"};
-    String[] rounds     = new String[]{"1", "2", "3", "4"};
+    String[] rounds     = new String[]{"1", "2", "3"};
     String[] flipend    = new String[]{"Start", "Middle", "End"};
     // Ugly bow shaped loop, coming up!
     for( String chain_value : cv ) {

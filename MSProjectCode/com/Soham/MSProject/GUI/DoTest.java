@@ -54,7 +54,7 @@ public class DoTest {
     lblCV.setText("Chaining Value Size");    
     final Combo comboCV = new Combo(shell, SWT.NONE);
     comboCV.setToolTipText("Choose the number of bits for chaining value.");
-    comboCV.setItems(new String[]{"32", "64", "128", "256", "512", "1024"});
+    comboCV.setItems(new String[]{"32", "64", "128", "256", "512"});
     comboCV.setBounds(185, 0, 201, 27);
     
     Label lblMethodToFind = new Label(shell, SWT.NONE);

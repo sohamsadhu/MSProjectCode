@@ -1,16 +1,14 @@
-//
 package com.Soham.MSProject.scratch;
 
+import java.util.Random;
 
 public class Scratch 
 {
   public static void main( String [] args )
   {
-    int[] startArray = {11, 21, 31, 41, 51};
-    int[] finishArray = {61, 71, 81, 91, 101, 111, 121, 131};
-    System.arraycopy(startArray, 0, finishArray, 0, startArray.length); 
-    for( int a : finishArray ) {
-      System.out.println("some "+ a);
+    Random r = new Random();
+    for(int i = 0; i < 5; i++) {
+      System.out.println("new random "+ r.nextDouble());
     }
   }
 }
