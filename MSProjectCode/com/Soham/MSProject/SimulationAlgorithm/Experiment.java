@@ -145,20 +145,18 @@ public class Experiment
   {
     FindCollision fc   = getCollision( m_collision );
     Hash          hash = getSHA3( sha3 );
-    System.out.println("Start experiment.");
     for( int i = 1; i < 21; i++ )
     {
       String[] msgpairs = getMessages( flipend, i );
       getCollisions( cv, fc, hash, diglen, rounds, flipend, i, msgpairs[0], msgpairs[1] );
     }
-    System.out.println("End experiment.");
   }
   
   // A helper method to loop over the different experiment variables and start the experiment.
   public void loopExperimentVariables()
   {
-    String[] cv         = new String[]{"32", "64", "128", "256", "512"};
-    String[] fc         = new String[]{"Hill Climbing", "Simulated Annealing", "Taboo Search", 
+    String[] cv         = new String[]{"32"}; //"32", "64", "128", "256", "512"
+    String[] fc         = new String[]{"Hill Climbing", "Simulated Annealing", // "Taboo Search", 
                                        "Random Search"};
     String[] sha3       = new String[]{"BLAKE", "Groestl", "Keccak"};
     String[] digest_len = new String[]{"224", "256", "384", "512"};
@@ -183,9 +181,9 @@ public class Experiment
   
   public static void main(String [] args)
   {
-//    Experiment e = new Experiment();
-//    e.getCollisions("32", new HillClimbing(), new BLAKE(), "512", "1", "Start", 1, 
-//        "54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f67",
-//        "d4686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f67");
+    Experiment e = new Experiment();
+    System.out.println("Start experiment.");
+    e.loopExperimentVariables();
+    System.out.println("End experiment.");
   }
 }
