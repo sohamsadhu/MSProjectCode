@@ -65,8 +65,8 @@ public class SimulatedAnnealing extends FindCollisionImpl
     byte[][] neighbours = getNeighbours( hexStringToByteArray( cv ));
     String next = null;
     long iteration = 0L;
-    double temperature = Math.pow((cv.length() * 4), 2);  // Make the temperature as square of bit length
-    double cooling_rate = 1;    // of chaining value which is roughly twice of neighbourhood size.
+    double temperature = Integer.parseInt(digest_length) * 11;  // Make the temperature > 10 times
+    double cooling_rate = 1;    // the digest length. Rather than based on neighbourhood.
     double probability;
     Random random = new Random();
     while( temperature > 0 )

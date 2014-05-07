@@ -1,0 +1,8 @@
+Success:36
+Total number of success iterations:209113
+Average number of success iterations:5808.694444444444
+Failure:92
+Total number of failure iterations:384002
+Average number of failed iterations:4173.934782608696
+Total iterations:593115
+Average iterations:4633.7109375

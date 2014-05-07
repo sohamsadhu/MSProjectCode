@@ -155,10 +155,10 @@ public class Experiment
   // A helper method to loop over the different experiment variables and start the experiment.
   public void loopExperimentVariables()
   {
-    String[] cv         = new String[]{"32"}; //"32", "64", "128", "256", "512"
-    String[] fc         = new String[]{"Random Search"}; //"Hill Climbing", "Simulated Annealing", 
-                                          // "Taboo Search"
-    String[] sha3       = new String[]{"Groestl", "Keccak"};    //"BLAKE"
+    String[] cv         = new String[]{"64"}; //"32", "64", "128", "256", "512"
+    String[] fc         = new String[]{"Simulated Annealing", "Random Search"};
+                                          //"Hill Climbing", "Taboo Search"
+    String[] sha3       = new String[]{"Groestl", "Keccak", "BLAKE"};    //
     String[] digest_len = new String[]{"224", "256", "384", "512"};
     String[] rounds     = new String[]{"1", "2", "3"};
     String[] flipend    = new String[]{"Start", "Middle", "End"};

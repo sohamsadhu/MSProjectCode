@@ -120,7 +120,7 @@ public class RandomSelection extends FindCollisionImpl
     // Random search will go for trials, based on average trials from each of other methods.
     // long trials = getTrials( sha3, digest_length, rounds, cv );
     // For fairness, will give random search as much time as the others at max.
-    long trials = ( long )Math.pow((cv.length() * 4), 2);
+    long trials = ( long )Integer.parseInt(digest_length) * 11;
     long trial_counter = 0;
     Random random = new Random();
     int best = getEvaluation( sha3, msg1, msg2, cv, rounds, digest_length );
