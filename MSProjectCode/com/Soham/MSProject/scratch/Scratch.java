@@ -1,14 +1,10 @@
 package com.Soham.MSProject.scratch;
 
-import java.util.Random;
-
 public class Scratch 
 {
   public static void main( String [] args )
   {
-    Random r = new Random();
-    for(int i = 0; i < 5; i++) {
-      System.out.println("new random "+ r.nextDouble());
-    }
+    String s = new String("The quick brown fox jumps over the lazy dog");
+    System.out.println("args "+ (s.length() * 8));
   }
 }

@@ -49,7 +49,7 @@ public class CreateOutputXls
     String[] cv         = new String[]{"32"}; //"32", "64", "128", "256", "512"
     String[] fc         = new String[]{"SimulatedAnnealing"};
     String[] sha3       = new String[]{"BLAKE", "Keccak", "Groestl"};    //
-    String[] digest_len = new String[]{"224"};
+    String[] digest_len = new String[]{"512"};
     String[] rounds     = new String[]{"1", "2", "3"};
     String[] flipend    = new String[]{"Start", "Middle", "End"};
     // Ugly bow shaped loop, coming up!
