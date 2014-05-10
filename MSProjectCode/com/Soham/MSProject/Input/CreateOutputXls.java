@@ -46,9 +46,9 @@ public class CreateOutputXls
   public void fileLoop()
   {
     String   path_begin = "Output/";
-    String[] cv         = new String[]{"32"}; //"32", "64", "128", "256", "512"
-    String[] fc         = new String[]{"SimulatedAnnealing"};
-    String[] sha3       = new String[]{"BLAKE", "Keccak", "Groestl"};    //
+    String[] cv         = new String[]{"64"}; //"32", "64", "128", "256", "512"
+    String[] fc         = new String[]{"HillClimbing"};
+    String[] sha3       = new String[]{"BLAKE", "Groestl", "Keccak"};    //
     String[] digest_len = new String[]{"512"};
     String[] rounds     = new String[]{"1", "2", "3"};
     String[] flipend    = new String[]{"Start", "Middle", "End"};
