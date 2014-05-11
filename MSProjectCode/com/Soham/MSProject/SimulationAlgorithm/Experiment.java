@@ -156,9 +156,9 @@ public class Experiment
   public void loopExperimentVariables()
   {
     String[] cv         = new String[]{"32"}; //"32", "64", "128", "256", "512"
-    String[] fc         = new String[]{"Hill Climbing", "Simulated Annealing", "Random Search"};
-                                          //, "Taboo Search"
-    String[] sha3       = new String[]{"Groestl", "Keccak", "BLAKE"};    //
+    String[] fc         = new String[]{"Random Search"};
+                                      //"Hill Climbing", "Simulated Annealing", "Taboo Search"
+    String[] sha3       = new String[]{"Keccak", "BLAKE"};    //"Groestl", 
     String[] digest_len = new String[]{"224", "256", "384", "512"};
     String[] rounds     = new String[]{"3", "4"};
     String[] flipend    = new String[]{"Start", "Middle", "End"};
