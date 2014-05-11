@@ -86,7 +86,7 @@ public class RandomSelection extends FindCollisionImpl
     long sum_iteration_success = 0L;
     long sum_iteration_failure = 0L;
     String chain_value;
-    for( int i = 0; i < 128; i++ )  // Experiment with 128 different random chaining values.
+    for( int i = 0; i < 256; i++ )  // Experiment with 256 different random chaining values.
     {
       chain_value = getChainValue( cv );    // For each experiment get a new chaining value.
       long[] results = randomSelect(sha3, msg1, msg2, chain_value, rounds, digest_length);
@@ -120,7 +120,7 @@ public class RandomSelection extends FindCollisionImpl
     // Random search will go for trials, based on average trials from each of other methods.
     // long trials = getTrials( sha3, digest_length, rounds, cv );
     // For fairness, will give random search as much time as the others at max.
-    long trials = ( long )Integer.parseInt(digest_length) * 11;
+    long trials = 1024; // This is square of 32 bits that is the chaining value bits.
     long trial_counter = 0;
     Random random = new Random();
     int best = getEvaluation( sha3, msg1, msg2, cv, rounds, digest_length );

@@ -27,7 +27,7 @@ public class SimulatedAnnealing extends FindCollisionImpl
     long sum_iteration_success = 0L;
     long sum_iteration_failure = 0L;
     String chain_value;
-    for( int i = 0; i < 128; i++ )  // Experiment with 128 different random chaining values.
+    for( int i = 0; i < 256; i++ )  // Experiment with 256 different random chaining values.
     {
       chain_value = getChainValue( cv );    // For each experiment get a new chaining value.
       long[] results = simulatedAnnealing(sha3, msg1, msg2, chain_value, rounds, digest_length);
@@ -65,7 +65,7 @@ public class SimulatedAnnealing extends FindCollisionImpl
     byte[][] neighbours = getNeighbours( hexStringToByteArray( cv ));
     String next = null;
     long iteration = 0L;
-    double temperature = Integer.parseInt(digest_length) * 11;  // Make the temperature > 10 times
+    double temperature = 1024;  // Make the temperature > 10 times
     double cooling_rate = 1;    // the digest length. Rather than based on neighbourhood.
     double probability;
     Random random = new Random();

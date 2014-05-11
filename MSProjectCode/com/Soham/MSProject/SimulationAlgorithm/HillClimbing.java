@@ -25,7 +25,7 @@ public class HillClimbing extends FindCollisionImpl
     long sum_iteration_success = 0L;
     long sum_iteration_failure = 0L;
     String chain_value;
-    for( int i = 0; i < 128; i++ )  // Experiment with 128 different random chaining values.
+    for( int i = 0; i < 256; i++ )  // Experiment with 256 different random chaining values.
     {
       chain_value = getChainValue( cv );    // For each experiment get a new chaining value.
       long[] results = hillClimbing(sha3, msg1, msg2, chain_value, rounds, digest_length);
