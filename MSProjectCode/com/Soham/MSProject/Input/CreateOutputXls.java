@@ -85,11 +85,11 @@ public class CreateOutputXls
   public void fileLoop()
   {
     String   path_begin = "Output/";
-    String[] cv         = new String[]{"32_128trials"}; //"32", "64", "128", "256", "512"
-    String[] fc         = new String[]{"HillClimbing"};
-    String[] sha3       = new String[]{"BLAKE", "Groestl", "Keccak"};    //
+    String[] cv         = new String[]{"32"}; //"32", "64", "128", "256", "512"
+    String[] fc         = new String[]{"RandomSelection"};
+    String[] sha3       = new String[]{"BLAKE", "Groestl", "Keccak"};
     String[] digest_len = new String[]{"224", "256", "384", "512"};
-    String[] rounds     = new String[]{"1", "2", "3"};
+    String[] rounds     = new String[]{"3", "4"};
     String[] flipend    = new String[]{"Start", "Middle", "End"};
     // Ugly bow shaped loop, coming up!
     for( String chain_value : cv ) {
@@ -97,12 +97,22 @@ public class CreateOutputXls
         for( String hash_method : sha3 ) {
           for( String digest_length : digest_len ) {
             for( String round : rounds ) {
+//              float avg = 0;
+              int collisions = 0;
+              int attempts = 0;
               for( String flip_folder : flipend ) {
                 int [] collision = getCollisionTrials( path_begin, chain_value, find_collision, 
                     hash_method, digest_length, round, flip_folder );
-                System.out.println(hash_method +" "+ digest_length +" "+ round +" "+ flip_folder 
-                    +" collision "+ collision[0] +" attempts "+ collision[1]);
+//                System.out.println(hash_method +" "+ digest_length +" "+ round +" "+ flip_folder 
+//                    +" collision "+ collision[0] +" attempts "+ collision[1]);
+//                avg += getAverage(path_begin, chain_value, find_collision, hash_method, 
+//                    digest_length, round, flip_folder);
+                collisions += collision[0];
+                attempts   += collision[1];
               }
+              System.out.println(hash_method +" "+ digest_length +" "+ round +" "
+                  +" collision "+ collisions +"/"+ attempts);
+              //System.out.println(hash_method +" "+ digest_length +" "+ round +" "+ (avg/3));
             }
           }
         }
