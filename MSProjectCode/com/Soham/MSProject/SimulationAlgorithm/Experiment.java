@@ -156,11 +156,11 @@ public class Experiment
   public void loopExperimentVariables()
   {
     String[] cv         = new String[]{"32"}; //"32", "64", "128", "256", "512"
-    String[] fc         = new String[]{"Random Search"};
-                                      //"Hill Climbing", "Simulated Annealing", "Taboo Search"
-    String[] sha3       = new String[]{"Keccak", "BLAKE"};    //"Groestl", 
+    String[] fc         = new String[]{"Hill Climbing"};
+                                      //"Random Search", "Simulated Annealing", "Taboo Search"
+    String[] sha3       = new String[]{"BLAKE", "Groestl", "Keccak"};
     String[] digest_len = new String[]{"224", "256", "384", "512"};
-    String[] rounds     = new String[]{"3", "4"};
+    String[] rounds     = new String[]{"3", "4", "5"};
     String[] flipend    = new String[]{"Start", "Middle", "End"};
     // Ugly bow shaped loop, coming up!
     for( String chain_value : cv ) {
