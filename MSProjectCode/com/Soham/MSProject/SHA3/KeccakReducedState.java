@@ -125,7 +125,79 @@ public class KeccakReducedState implements Hash
    */
   public byte[][][] xorStatePermutation( byte[][][] state, byte[] msg_block, int lane_length_byte )
   {
-    return null;
+    int state_length = lane_length_byte * 25;
+    byte[] temp_block = new byte[ state_length ]; // Get the state size in bytes.
+    // Pad the message with the zeros, so that it can be easily XORed with the state.
+    for( int i = 0; i < msg_block.length; i++ )  {
+      temp_block[i] = msg_block[i];
+    }
+    for( int i = msg_block.length; i < state_length; i++ ) {
+      temp_block[i] = 0x00;
+    }
+    int row_offset, col_offset;
+    for( int i = 0; i < 5; i++ )
+    {
+      row_offset = i * lane_length_byte * 5;
+      for( int j = 0; j < 5; j++ )
+      {
+        col_offset = j * lane_length;
+        for( int k = 0; k < lane_length_byte; k++ ) {
+          state[i][j][k] ^= temp_block[row_offset + col_offset + (lane_length_byte - 1 - k)];
+        }
+      }
+    }
+    return state;
+  }
+  
+  /**
+   * Theta works on the column, the first index x in specification is not the row but the column.
+   * @param state
+   * @return
+   */
+  public byte[][][] theta( byte[][][] state )
+  {
+    int lane_length_byte = this.lane_length / 8;
+    byte[][] c = new byte[5][lane_length_byte]; // c will be a vertical slice of the state
+    byte[][] d = new byte[5][lane_length_byte];
+    for( int i = 0; i < 5; i++ )
+    {
+      for( int j = 0; j < lane_length_byte; j++ ) 
+      {
+        c[i][j] = (byte)( state[i][0][j] ^ state[i][1][j] ^ state[i][2][j] ^ state[i][3][j] 
+            ^ state[i][4][j] );
+      }
+    }
+    
+    
+    d[0] = c[4] ^ rotation(c[1], 1);
+    for( int i = 1; i < 5; i++ ) {
+      d[i] = c[i - 1] ^ rotation(c[(i + 1) % 5], 1);
+    }
+    for( int i = 0; i < 5; i++ )
+    {
+      for( int j = 0; j < 5; j++ ) {
+        state[i][j] = state[i][j] ^ d[j];
+      }
+    }
+    return state;
+  }
+  
+  /**
+   * Just permute the provided block for as many rounds, as per the round parameter.
+   * @param state
+   * @param rounds
+   * @return
+   */
+  public byte[][][] permute( byte[][][] state, int rounds )
+  {
+    for( int i = 0; i < rounds; i++ )
+    {
+      state = theta( state );
+      state = rhoPi( state );
+      state = chi( state );
+      state = iota(state);
+    }
+    return state;
   }
   
   /**
