@@ -150,6 +150,23 @@ public class KeccakReducedState implements Hash
   }
   
   /**
+   * Source: http://www.herongyang.com/Java/Bit-String-Left-Rotation-All-Bits-in-Byte-Array.html
+   * @param lane
+   * @param rotate
+   * @return
+   */
+  public byte[] rotation( byte [] lane, int rotate )
+  {
+    int num_bits = lane.length * 8;
+    byte[] out = new byte[lane.length];
+    for( int i = 0; i < lane.length; i++ )
+    {
+      int val = getBit(lane, (i + rotate) % num_bits);
+    }
+    return lane;
+  }
+  
+  /**
    * Theta works on the column, the first index x in specification is not the row but the column.
    * @param state
    * @return
