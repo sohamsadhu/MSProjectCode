@@ -2,6 +2,11 @@ package com.Soham.MSProject.SHA3;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Here the capacity of the Keccak is kept as the digest length. Thus higher digest lengths
+ * have higher capacity.
+ * @author Soham
+ */
 public class Keccak800 implements Hash
 {
   public static final int[] RC = { 0x00000001, 0x00008082, 0x0000808A, 0x80008000, 0x0000808B,
@@ -232,18 +237,13 @@ public class Keccak800 implements Hash
       state = rhoPi( state );
       state = chi( state );
       state[0][0] = state[0][0] ^ RC[i];
+//      System.out.println("after round "+ i);
+//      printState( state );
     }
     return state;
   }
   
-  /**
-   * After absorption, squeeze the required bits. This function is called once, since for our
-   * implementation the digest length is shorter than the state size.
-   * @param state
-   * @param digest_length
-   * @return
-   */
-  public byte[] squeeze( int[][] state, int digest_length )
+  public byte[] stateToString( int[][] state )
   {
     int temp;
     byte[] hashed = new byte[ 100 ];
@@ -256,16 +256,73 @@ public class Keccak800 implements Hash
         buf.putInt( temp );
         byte[] lane = buf.array();
         for( int k = 0; k < 4; k++ ) {
-          hashed[(i * 20) + (j * 4) + k] = lane[7 - k];
+          hashed[(i * 20) + (j * 4) + k] = lane[3 - k];
         }
       }
     }
+    return hashed;
+  }
+  
+  /**
+   * After absorption, squeeze the required bits. This function is called once, since for our
+   * implementation the digest length is shorter than the state size.
+   * @param state
+   * @param digest_length
+   * @return
+   */
+  public byte[] squeeze( int[][] state, int bit_rate, int digest_length, int rounds )
+  {    
     digest_length = digest_length / 8; // Get the length in bytes.
+    bit_rate = bit_rate / 8; // Get the bit rate in bytes
     byte[] squeezed = new byte[ digest_length ];
-    for( int i = 0; i < digest_length; i++ ) {
-      squeezed[i] = hashed[i];
+    byte[] hashed = stateToString( state );
+    if( digest_length <= bit_rate )
+    {
+      for( int i = 0; i < digest_length; i++ ) {
+        squeezed[i] = hashed[i];
+      }
     }
+    else
+    {
+      int squeezed_bytes;
+      for( squeezed_bytes = 0; squeezed_bytes < bit_rate; squeezed_bytes++ ) {
+        squeezed[squeezed_bytes] = hashed[squeezed_bytes];
+      }
+      while( squeezed_bytes < digest_length )
+      {
+        state = permute( state, rounds );
+        hashed = stateToString( state );
+        int i = 0;
+        while((i < bit_rate) && (squeezed_bytes < digest_length)) 
+        {
+          squeezed[squeezed_bytes] = hashed[i];
+          i++; squeezed_bytes++;
+        }
+      } 
+    }    
     return squeezed;
+  }
+  
+  /**
+   * Just print the state as it is.
+   * @param state of Keccak, assumed to be of 1600 bits.
+   */
+  public void printState( int[][] state )
+  {
+    for( int[] row : state )
+    {
+      for( int cell : row )
+      {
+        ByteBuffer buf = ByteBuffer.allocate(4);
+        buf.putInt( cell );
+        byte[] statebyte = buf.array();
+        for( byte b : statebyte ) {
+          System.out.printf("%02X", b);
+        }
+        System.out.printf(" ");
+      }
+      System.out.println("");
+    }
   }
   
   /**
@@ -275,17 +332,19 @@ public class Keccak800 implements Hash
    * @param rounds
    * @return
    */
-  public byte[] transform( byte[] message, int bit_rate, int rounds )
+  public byte[] transform( byte[] message, int bit_rate, int rounds, int digest_length )
   {
-    int[][] state = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 
-        {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+    int[][] state = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
     byte[][] msg_blocks = getMsgBlocks( message, bit_rate );
     for( byte[] block : msg_blocks )
     {
       state = xorStatePermutation( state, block );
+//      System.out.println("initial state");
+//      printState( state );
       state = permute( state, rounds );
     }
-    byte[] hash = squeeze( state, (800 - bit_rate) / 2 );
+    byte[] hash = squeeze( state, bit_rate, digest_length, rounds );
     return hash;
   }
   
@@ -296,16 +355,23 @@ public class Keccak800 implements Hash
    * @param rounds will be 24 if provided by zero or will be done as provided.
    * @return
    */
-  public byte[] hash( String message,  int digest_length, int rounds )
+  public byte[] hash( String message, int digest_length, int rounds )
   {
     int capacity = digest_length;
     int bit_rate = 800 - capacity;    // block length
-    rounds = rounds == 0 ? 22 : rounds; // rounds = 12 + 2l = 12 + 2 * 5 = 22
+    rounds = (rounds == 0) ? 22 : rounds; // rounds = 12 + 2l = 12 + 2 * 5 = 22
     byte[] msg = convertHexStringToBytes( message );
     byte[] padded_msg = pad( msg, bit_rate );
-    byte[] hash = transform( padded_msg, bit_rate, rounds );
+    byte[] hash = transform( padded_msg, bit_rate, rounds, digest_length );
     return hash;
   }
   
-  
+  public static void main( String [] args )
+  {
+    Keccak800 k = new Keccak800();
+    byte[] hashed = k.hash("00112233445566778899AABBCCDDEEFF", 512, 0);
+    for( byte b : hashed ) {
+      System.out.printf("%02X", b);
+    }
+  }
 }

@@ -1,7 +1,5 @@
 package com.Soham.MSProject.SHA3;
 
-import java.nio.ByteBuffer;
-
 public class KeccakReducedState implements Hash
 {
   private int state_size; // This should be in [25, 50, 100, 200, 400, 800, 1600]
@@ -149,55 +147,7 @@ public class KeccakReducedState implements Hash
     return state;
   }
   
-  /**
-   * Source: http://www.herongyang.com/Java/Bit-String-Left-Rotation-All-Bits-in-Byte-Array.html
-   * @param lane
-   * @param rotate
-   * @return
-   */
-  public byte[] rotation( byte [] lane, int rotate )
-  {
-    int num_bits = lane.length * 8;
-    byte[] out = new byte[lane.length];
-    for( int i = 0; i < lane.length; i++ )
-    {
-      int val = getBit(lane, (i + rotate) % num_bits);
-    }
-    return lane;
-  }
-  
-  /**
-   * Theta works on the column, the first index x in specification is not the row but the column.
-   * @param state
-   * @return
-   */
-  public byte[][][] theta( byte[][][] state )
-  {
-    int lane_length_byte = this.lane_length / 8;
-    byte[][] c = new byte[5][lane_length_byte]; // c will be a vertical slice of the state
-    byte[][] d = new byte[5][lane_length_byte];
-    for( int i = 0; i < 5; i++ )
-    {
-      for( int j = 0; j < lane_length_byte; j++ ) 
-      {
-        c[i][j] = (byte)( state[i][0][j] ^ state[i][1][j] ^ state[i][2][j] ^ state[i][3][j] 
-            ^ state[i][4][j] );
-      }
-    }
-    
-    
-    d[0] = c[4] ^ rotation(c[1], 1);
-    for( int i = 1; i < 5; i++ ) {
-      d[i] = c[i - 1] ^ rotation(c[(i + 1) % 5], 1);
-    }
-    for( int i = 0; i < 5; i++ )
-    {
-      for( int j = 0; j < 5; j++ ) {
-        state[i][j] = state[i][j] ^ d[j];
-      }
-    }
-    return state;
-  }
+ 
   
   /**
    * Just permute the provided block for as many rounds, as per the round parameter.
@@ -209,10 +159,10 @@ public class KeccakReducedState implements Hash
   {
     for( int i = 0; i < rounds; i++ )
     {
-      state = theta( state );
-      state = rhoPi( state );
-      state = chi( state );
-      state = iota(state);
+//      state = theta( state );
+//      state = rhoPi( state );
+//      state = chi( state );
+//      state = iota(state);
     }
     return state;
   }
@@ -243,8 +193,8 @@ public class KeccakReducedState implements Hash
       state = xorStatePermutation( state, block, lane_length_byte );
       state = permute( state, rounds );
     }
-    byte[] hash = squeeze( state, (1600 - bit_rate) / 2 );
-    return hash;
+//    byte[] hash = squeeze( state, (1600 - bit_rate) / 2 );
+    return null;
   }
   
   @Override
