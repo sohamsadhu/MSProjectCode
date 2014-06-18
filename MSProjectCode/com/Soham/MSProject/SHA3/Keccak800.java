@@ -115,8 +115,8 @@ public class Keccak800 implements Hash
           temp[k] = temp_block[row_offset + column_offset - 1 - k];
         }
         wrapped = ByteBuffer.wrap( temp );
-        int temp_long = wrapped.getInt();
-        state[i][j] = state[i][j] ^ temp_long;
+        int temp_int = wrapped.getInt();
+        state[i][j] = state[i][j] ^ temp_int;
       }
     }
     return state;
