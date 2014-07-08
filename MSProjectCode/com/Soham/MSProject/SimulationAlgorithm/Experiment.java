@@ -10,6 +10,9 @@ import com.Soham.MSProject.SHA3.BLAKE;
 import com.Soham.MSProject.SHA3.Groestl;
 import com.Soham.MSProject.SHA3.Hash;
 import com.Soham.MSProject.SHA3.Keccak;
+import com.Soham.MSProject.SHA3.Keccak200;
+import com.Soham.MSProject.SHA3.Keccak400;
+import com.Soham.MSProject.SHA3.Keccak800;
 
 public class Experiment 
 {  
@@ -22,10 +25,13 @@ public class Experiment
   {
     switch( hash_name )
     {
-    case "BLAKE":   return (new BLAKE());
-    case "Groestl": return (new Groestl());
-    case "Keccak":  return (new Keccak());
-    default:        return (new Keccak());
+    case "BLAKE":     return (new BLAKE());
+    case "Groestl":   return (new Groestl());
+    case "Keccak":    return (new Keccak());
+    case "Keccak200": return (new Keccak200());
+    case "Keccak400": return (new Keccak400());
+    case "Keccak800": return (new Keccak800());
+    default:          return (new Keccak());
     }
   }
   
@@ -158,9 +164,9 @@ public class Experiment
     String[] cv         = new String[]{"32"}; //"32", "64", "128", "256", "512"
     String[] fc         = new String[]{"Hill Climbing"};
                                       //"Random Search", "Simulated Annealing", "Taboo Search"
-    String[] sha3       = new String[]{"BLAKE", "Groestl", "Keccak"};
+    String[] sha3       = new String[]{ "BLAKE", "Groestl", "Keccak200", "Keccak400", "Keccak800", "Keccak"}; //
     String[] digest_len = new String[]{"224", "256", "384", "512"};
-    String[] rounds     = new String[]{"3", "4", "5"};
+    String[] rounds     = new String[]{"1", "2"};
     String[] flipend    = new String[]{"Start", "Middle", "End"};
     // Ugly bow shaped loop, coming up!
     for( String chain_value : cv ) {

@@ -17,10 +17,10 @@ public class FindCollisionImpl implements FindCollision
   {
     switch( digest_length )
     {
-    case 224: return 33;    // 65% match 146/224, 78. 75%, 168/224, 56. 85%, 191/224, 33.
-    case 256: return 38;    // 167/256, 89. 192/256, 64. 218/256, 38.
-    case 384: return 57;   // 250/384, 134. 288/384, 96. 327/384, 57.
-    case 512: return 76;   // 333/512, 179. 384/512, 128. 436/512, 76.
+    case 224: return 56;    // 65% match 146/224, 78. 75%, 168/224, 56. 85%, 191/224, 33.
+    case 256: return 64;    // 167/256, 89. 192/256, 64. 218/256, 38.
+    case 384: return 96;   // 250/384, 134. 288/384, 96. 327/384, 57.
+    case 512: return 128;   // 333/512, 179. 384/512, 128. 436/512, 76.
     default:  return 0;
     }
   }

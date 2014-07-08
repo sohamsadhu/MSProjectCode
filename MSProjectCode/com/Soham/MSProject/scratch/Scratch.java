@@ -4,9 +4,9 @@ public class Scratch
 {   
   public static void main( String [] args )
   {
-    String s = "4C6F72656D20697073756D20646F6C6F722073697420616D65742C20636F6E736563746574757220"
-        + "61646970697363696E6720656C69742E20446F6E65632061206469616D206C65637475732E20536564207"
-        + "3697420616D657420697073756D206D61757269732E204D616563656E617320636F6E6775";
-    System.out.println("string leng "+ ((s.length() / 2) * 8));
+    String s = "54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f67";
+    System.out.println("string leng "+ s.length());
+    s = s.substring(43);
+    System.out.println("str "+ s);
   }
 }
